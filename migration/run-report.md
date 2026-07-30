@@ -3,12 +3,12 @@
 ## Executive summary
 
 Autonomous migration of coolstore-cart-service-v7:
-story gate passed (non-deploy story): pipeline + quality gate green. Findings delta and per-task detail: migration/run-log.md;
+factory not passed (build=0 gate=0 deploy=3 rounds). Findings delta and per-task detail: migration/run-log.md;
 debt: migration/debt.md. Orchestrator custom:maas-m2/minimax-m2,
-worker qwen27b/qwen3-6-27b, 35 model sessions.
+worker qwen27b/qwen3-6-27b, 44 model sessions.
 
-- Outcome: story gate passed (non-deploy story): pipeline + quality gate green
-- Supervisor version: 056963fe; run base: f1ce6e4
+- Outcome: factory not passed (build=0 gate=0 deploy=3 rounds)
+- Supervisor version: 9a291882; run base: 83863d03095166d36ebdefc1bb8de4522672334e
 - Orchestrator: custom:maas-m2/minimax-m2; worker: qwen27b/qwen3-6-27b
 
 ## Sessions
@@ -50,22 +50,31 @@ worker qwen27b/qwen3-6-27b, 35 model sessions.
 | T-007-a1p0 | 468 | rc=0 |
 | T-008-sfix | 484 | rc=0 |
 | m5-evaluate-a1p0 | 105 | rc=0 |
+| retro | 59 | rc=0 |
+| T-001-a1p0 | 602 | rc=0 |
+| T-002-a1p0 | 1654 | rc=0 |
+| T-002-sfix | 903 | rc=124 |
+| T-003-a1p0 | 584 | rc=0 |
+| T-003-sfix | 511 | rc=0 |
+| m5-evaluate-a1p0 | 713 | rc=0 |
+| deployfix-r1-a1p0 | 769 | rc=0 |
+| deployfix-r2-a1p0 | 1145 | rc=0 |
 
 - Escalations (KPI, from supervisor events): 0 (untested: 0)
 
 ## Classified events
 
 ```
-     21 success
+     27 success
+      9 sensor_red_post_commit
+      9 pipeline_succeeded
+      7 style_autofix
       6 story_gate_pass
-      6 sensor_red_post_commit
-      6 pipeline_succeeded
-      4 style_autofix
       4 already_complete
+      3 sfix_committed_still_red
       3 no_commit
+      3 debt_recorded
       2 quota
-      1 sfix_committed_still_red
       1 preflight_red
       1 orphan_worker
-      1 debt_recorded
 ```
