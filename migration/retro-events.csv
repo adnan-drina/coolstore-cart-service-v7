@@ -41,3 +41,17 @@ epoch,stage,attempt,class,action
 1785401928,m5-evaluate,1,success,commit
 1785402133,m5-ship,0,pipeline_succeeded,coolstore-cart-service-v7-push-mdgjv
 1785402133,m5-ship,0,story_gate_pass,non-deploy story
+1785403677,T-001,1,success,commit
+1785403770,T-002,1,success,commit
+1785403777,T-003,0,already_complete,CATALOG_ENDPOINT
+1785404281,T-005,0,sensor_red_post_commit,verify
+1785404759,T-006,0,already_complete,CATALOG_ENDPOINT
+1785405776,T-007,1,success,commit
+1785406864,T-008,0,sensor_red_post_commit,verify
+1785407020,T-008,0,style_autofix,partial
+1785410030,T-008,0,sensor_red_post_commit,verify
+1785410804,T-008,0,sfix_committed_still_red,verify
+1785410804,T-008,0,debt_recorded,milestone
+1785411738,m5-evaluate,1,success,commit
+1785411951,m5-ship,0,pipeline_succeeded,coolstore-cart-service-v7-push-l2kpt
+1785411951,m5-ship,0,story_gate_pass,non-deploy story
