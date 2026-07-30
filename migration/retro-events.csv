@@ -55,3 +55,22 @@ epoch,stage,attempt,class,action
 1785411738,m5-evaluate,1,success,commit
 1785411951,m5-ship,0,pipeline_succeeded,coolstore-cart-service-v7-push-l2kpt
 1785411951,m5-ship,0,story_gate_pass,non-deploy story
+1785413784,T-001,1,success,commit
+1785417748,T-002,1,success,commit
+1785417768,T-002,0,sensor_red_post_commit,verify
+1785417805,T-002,0,style_autofix,partial
+1785418727,T-002,0,sfix_committed_still_red,verify
+1785418727,T-002,0,debt_recorded,task
+1785419924,T-003,1,success,commit
+1785419943,T-003,0,sensor_red_post_commit,verify
+1785419979,T-003,0,style_autofix,partial
+1785420509,T-003,0,sfix_committed_still_red,verify
+1785420509,T-003,0,debt_recorded,task
+1785422413,T-002,0,sensor_red_post_commit,verify
+1785422583,T-002,0,style_autofix,resolved
+1785423973,m5-evaluate,1,success,commit
+1785424253,m5-ship,0,pipeline_succeeded,coolstore-cart-service-v7-push-8rm29
+1785425033,deployfix-r1,1,success,commit
+1785425372,m5-ship,0,pipeline_succeeded,coolstore-cart-service-v7-push-5cmfc
+1785426528,deployfix-r2,1,success,commit
+1785426893,m5-ship,0,pipeline_succeeded,coolstore-cart-service-v7-push-z48ns
