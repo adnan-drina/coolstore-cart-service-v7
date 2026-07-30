@@ -554,8 +554,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/resources/application.properties",
 						"message": "The app is trying to access local resource by HTTP, please try to migrate the resource to cloud",
-						"codeSnip": "  1  quarkus.application.name=coolstore-cart\n  2  quarkus.http.port=8080\n  3  quarkus.rest.path=/api\n  4  quarkus.analytics.disabled=true\n  5  \n  6  # Catalog service endpoint — replaces Spring Cloud OpenFeign CATALOG_ENDPOINT.\n  7  # Override with env CATALOG_ENDPOINT or -DCATALOG_ENDPOINT=...\n  8  quarkus.rest-client.\"catalog-service\".url=${CATALOG_ENDPOINT:http://localhost:8081}\n  9  \n 10  # LLM access is only through the MaaS gateway (see .opencode/skills/llm-integration.md).\n 11  # Uncomment when implementing an LLM-powered feature; the workspace injects\n 12  # the MAAS_* environment variables.\n 13  # quarkus.langchain4j.openai.base-url=${MAAS_API_BASE_URL}\n 14  # quarkus.langchain4j.openai.api-key=${MAAS_API_KEY}\n 15  # quarkus.langchain4j.openai.chat-model.model-name=${MAAS_MODEL_NAME}\n 16  # quarkus.langchain4j.openai.chat-model.temperature=0.1\n 17  # quarkus.langchain4j.openai.timeout=60s\n",
-						"lineNumber": 8,
+						"codeSnip": "  1  quarkus.application.name=coolstore-cart\n  2  quarkus.http.port=8080\n  3  quarkus.rest.path=/api\n  4  quarkus.analytics.disabled=true\n  5  \n  6  # Root endpoint to serve index JSON at /\n  7  quarkus.http.root-path=\n  8  \n  9  # Catalog service endpoint — replaces Spring Cloud OpenFeign CATALOG_ENDPOINT.\n 10  # Override with env CATALOG_ENDPOINT or -DCATALOG_ENDPOINT=...\n 11  quarkus.rest-client.\"catalog-service\".url=${CATALOG_ENDPOINT:http://localhost:8081}\n 12  \n 13  # LLM access is only through the MaaS gateway (see .opencode/skills/llm-integration.md).\n 14  # Uncomment when implementing an LLM-powered feature; the workspace injects\n 15  # the MAAS_* environment variables.\n 16  # quarkus.langchain4j.openai.base-url=${MAAS_API_BASE_URL}\n 17  # quarkus.langchain4j.openai.api-key=${MAAS_API_KEY}\n 18  # quarkus.langchain4j.openai.chat-model.model-name=${MAAS_MODEL_NAME}\n 19  # quarkus.langchain4j.openai.chat-model.temperature=0.1\n 20  # quarkus.langchain4j.openai.timeout=60s\n",
+						"lineNumber": 11,
 						"variables": {
 							"matchingText": "http://localhost:8081"
 						}
@@ -631,8 +631,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/resources/application.properties",
 						"message": "This configuration key follows the environment-variable convention (ALL_CAPS key or ${ALL_CAPS} placeholder) — an operational contract: deployments inject it to point the app at external services. Record it under `preserve:` in migration.yaml and keep it env-driven in the migrated configuration (e.g. `quarkus.rest-client.\u003ckey\u003e.url=${VAR:default}`). Erasing or hardcoding it is a functional regression no unit test catches.\n",
-						"codeSnip": "  1  quarkus.application.name=coolstore-cart\n  2  quarkus.http.port=8080\n  3  quarkus.rest.path=/api\n  4  quarkus.analytics.disabled=true\n  5  \n  6  # Catalog service endpoint — replaces Spring Cloud OpenFeign CATALOG_ENDPOINT.\n  7  # Override with env CATALOG_ENDPOINT or -DCATALOG_ENDPOINT=...\n  8  quarkus.rest-client.\"catalog-service\".url=${CATALOG_ENDPOINT:http://localhost:8081}\n  9  \n 10  # LLM access is only through the MaaS gateway (see .opencode/skills/llm-integration.md).\n 11  # Uncomment when implementing an LLM-powered feature; the workspace injects\n 12  # the MAAS_* environment variables.\n 13  # quarkus.langchain4j.openai.base-url=${MAAS_API_BASE_URL}\n 14  # quarkus.langchain4j.openai.api-key=${MAAS_API_KEY}\n 15  # quarkus.langchain4j.openai.chat-model.model-name=${MAAS_MODEL_NAME}\n 16  # quarkus.langchain4j.openai.chat-model.temperature=0.1\n 17  # quarkus.langchain4j.openai.timeout=60s\n",
-						"lineNumber": 8,
+						"codeSnip": "  1  quarkus.application.name=coolstore-cart\n  2  quarkus.http.port=8080\n  3  quarkus.rest.path=/api\n  4  quarkus.analytics.disabled=true\n  5  \n  6  # Root endpoint to serve index JSON at /\n  7  quarkus.http.root-path=\n  8  \n  9  # Catalog service endpoint — replaces Spring Cloud OpenFeign CATALOG_ENDPOINT.\n 10  # Override with env CATALOG_ENDPOINT or -DCATALOG_ENDPOINT=...\n 11  quarkus.rest-client.\"catalog-service\".url=${CATALOG_ENDPOINT:http://localhost:8081}\n 12  \n 13  # LLM access is only through the MaaS gateway (see .opencode/skills/llm-integration.md).\n 14  # Uncomment when implementing an LLM-powered feature; the workspace injects\n 15  # the MAAS_* environment variables.\n 16  # quarkus.langchain4j.openai.base-url=${MAAS_API_BASE_URL}\n 17  # quarkus.langchain4j.openai.api-key=${MAAS_API_KEY}\n 18  # quarkus.langchain4j.openai.chat-model.model-name=${MAAS_MODEL_NAME}\n 19  # quarkus.langchain4j.openai.chat-model.temperature=0.1\n 20  # quarkus.langchain4j.openai.timeout=60s\n",
+						"lineNumber": 11,
 						"variables": {
 							"matchingText": "${CATALOG_ENDPOINT:http://localhost:8081}"
 						}
@@ -640,8 +640,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/resources/application.properties",
 						"message": "This configuration key follows the environment-variable convention (ALL_CAPS key or ${ALL_CAPS} placeholder) — an operational contract: deployments inject it to point the app at external services. Record it under `preserve:` in migration.yaml and keep it env-driven in the migrated configuration (e.g. `quarkus.rest-client.\u003ckey\u003e.url=${VAR:default}`). Erasing or hardcoding it is a functional regression no unit test catches.\n",
-						"codeSnip": "  1  quarkus.application.name=coolstore-cart\n  2  quarkus.http.port=8080\n  3  quarkus.rest.path=/api\n  4  quarkus.analytics.disabled=true\n  5  \n  6  # Catalog service endpoint — replaces Spring Cloud OpenFeign CATALOG_ENDPOINT.\n  7  # Override with env CATALOG_ENDPOINT or -DCATALOG_ENDPOINT=...\n  8  quarkus.rest-client.\"catalog-service\".url=${CATALOG_ENDPOINT:http://localhost:8081}\n  9  \n 10  # LLM access is only through the MaaS gateway (see .opencode/skills/llm-integration.md).\n 11  # Uncomment when implementing an LLM-powered feature; the workspace injects\n 12  # the MAAS_* environment variables.\n 13  # quarkus.langchain4j.openai.base-url=${MAAS_API_BASE_URL}\n 14  # quarkus.langchain4j.openai.api-key=${MAAS_API_KEY}\n 15  # quarkus.langchain4j.openai.chat-model.model-name=${MAAS_MODEL_NAME}\n 16  # quarkus.langchain4j.openai.chat-model.temperature=0.1\n 17  # quarkus.langchain4j.openai.timeout=60s\n",
-						"lineNumber": 13,
+						"codeSnip": "  1  quarkus.application.name=coolstore-cart\n  2  quarkus.http.port=8080\n  3  quarkus.rest.path=/api\n  4  quarkus.analytics.disabled=true\n  5  \n  6  # Root endpoint to serve index JSON at /\n  7  quarkus.http.root-path=\n  8  \n  9  # Catalog service endpoint — replaces Spring Cloud OpenFeign CATALOG_ENDPOINT.\n 10  # Override with env CATALOG_ENDPOINT or -DCATALOG_ENDPOINT=...\n 11  quarkus.rest-client.\"catalog-service\".url=${CATALOG_ENDPOINT:http://localhost:8081}\n 12  \n 13  # LLM access is only through the MaaS gateway (see .opencode/skills/llm-integration.md).\n 14  # Uncomment when implementing an LLM-powered feature; the workspace injects\n 15  # the MAAS_* environment variables.\n 16  # quarkus.langchain4j.openai.base-url=${MAAS_API_BASE_URL}\n 17  # quarkus.langchain4j.openai.api-key=${MAAS_API_KEY}\n 18  # quarkus.langchain4j.openai.chat-model.model-name=${MAAS_MODEL_NAME}\n 19  # quarkus.langchain4j.openai.chat-model.temperature=0.1\n 20  # quarkus.langchain4j.openai.timeout=60s\n",
+						"lineNumber": 16,
 						"variables": {
 							"matchingText": "${MAAS_API_BASE_URL}"
 						}
@@ -649,8 +649,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/resources/application.properties",
 						"message": "This configuration key follows the environment-variable convention (ALL_CAPS key or ${ALL_CAPS} placeholder) — an operational contract: deployments inject it to point the app at external services. Record it under `preserve:` in migration.yaml and keep it env-driven in the migrated configuration (e.g. `quarkus.rest-client.\u003ckey\u003e.url=${VAR:default}`). Erasing or hardcoding it is a functional regression no unit test catches.\n",
-						"codeSnip": "  1  quarkus.application.name=coolstore-cart\n  2  quarkus.http.port=8080\n  3  quarkus.rest.path=/api\n  4  quarkus.analytics.disabled=true\n  5  \n  6  # Catalog service endpoint — replaces Spring Cloud OpenFeign CATALOG_ENDPOINT.\n  7  # Override with env CATALOG_ENDPOINT or -DCATALOG_ENDPOINT=...\n  8  quarkus.rest-client.\"catalog-service\".url=${CATALOG_ENDPOINT:http://localhost:8081}\n  9  \n 10  # LLM access is only through the MaaS gateway (see .opencode/skills/llm-integration.md).\n 11  # Uncomment when implementing an LLM-powered feature; the workspace injects\n 12  # the MAAS_* environment variables.\n 13  # quarkus.langchain4j.openai.base-url=${MAAS_API_BASE_URL}\n 14  # quarkus.langchain4j.openai.api-key=${MAAS_API_KEY}\n 15  # quarkus.langchain4j.openai.chat-model.model-name=${MAAS_MODEL_NAME}\n 16  # quarkus.langchain4j.openai.chat-model.temperature=0.1\n 17  # quarkus.langchain4j.openai.timeout=60s\n",
-						"lineNumber": 14,
+						"codeSnip": "  1  quarkus.application.name=coolstore-cart\n  2  quarkus.http.port=8080\n  3  quarkus.rest.path=/api\n  4  quarkus.analytics.disabled=true\n  5  \n  6  # Root endpoint to serve index JSON at /\n  7  quarkus.http.root-path=\n  8  \n  9  # Catalog service endpoint — replaces Spring Cloud OpenFeign CATALOG_ENDPOINT.\n 10  # Override with env CATALOG_ENDPOINT or -DCATALOG_ENDPOINT=...\n 11  quarkus.rest-client.\"catalog-service\".url=${CATALOG_ENDPOINT:http://localhost:8081}\n 12  \n 13  # LLM access is only through the MaaS gateway (see .opencode/skills/llm-integration.md).\n 14  # Uncomment when implementing an LLM-powered feature; the workspace injects\n 15  # the MAAS_* environment variables.\n 16  # quarkus.langchain4j.openai.base-url=${MAAS_API_BASE_URL}\n 17  # quarkus.langchain4j.openai.api-key=${MAAS_API_KEY}\n 18  # quarkus.langchain4j.openai.chat-model.model-name=${MAAS_MODEL_NAME}\n 19  # quarkus.langchain4j.openai.chat-model.temperature=0.1\n 20  # quarkus.langchain4j.openai.timeout=60s\n",
+						"lineNumber": 17,
 						"variables": {
 							"matchingText": "${MAAS_API_KEY}"
 						}
@@ -658,8 +658,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/resources/application.properties",
 						"message": "This configuration key follows the environment-variable convention (ALL_CAPS key or ${ALL_CAPS} placeholder) — an operational contract: deployments inject it to point the app at external services. Record it under `preserve:` in migration.yaml and keep it env-driven in the migrated configuration (e.g. `quarkus.rest-client.\u003ckey\u003e.url=${VAR:default}`). Erasing or hardcoding it is a functional regression no unit test catches.\n",
-						"codeSnip": "  1  quarkus.application.name=coolstore-cart\n  2  quarkus.http.port=8080\n  3  quarkus.rest.path=/api\n  4  quarkus.analytics.disabled=true\n  5  \n  6  # Catalog service endpoint — replaces Spring Cloud OpenFeign CATALOG_ENDPOINT.\n  7  # Override with env CATALOG_ENDPOINT or -DCATALOG_ENDPOINT=...\n  8  quarkus.rest-client.\"catalog-service\".url=${CATALOG_ENDPOINT:http://localhost:8081}\n  9  \n 10  # LLM access is only through the MaaS gateway (see .opencode/skills/llm-integration.md).\n 11  # Uncomment when implementing an LLM-powered feature; the workspace injects\n 12  # the MAAS_* environment variables.\n 13  # quarkus.langchain4j.openai.base-url=${MAAS_API_BASE_URL}\n 14  # quarkus.langchain4j.openai.api-key=${MAAS_API_KEY}\n 15  # quarkus.langchain4j.openai.chat-model.model-name=${MAAS_MODEL_NAME}\n 16  # quarkus.langchain4j.openai.chat-model.temperature=0.1\n 17  # quarkus.langchain4j.openai.timeout=60s\n",
-						"lineNumber": 15,
+						"codeSnip": "  1  quarkus.application.name=coolstore-cart\n  2  quarkus.http.port=8080\n  3  quarkus.rest.path=/api\n  4  quarkus.analytics.disabled=true\n  5  \n  6  # Root endpoint to serve index JSON at /\n  7  quarkus.http.root-path=\n  8  \n  9  # Catalog service endpoint — replaces Spring Cloud OpenFeign CATALOG_ENDPOINT.\n 10  # Override with env CATALOG_ENDPOINT or -DCATALOG_ENDPOINT=...\n 11  quarkus.rest-client.\"catalog-service\".url=${CATALOG_ENDPOINT:http://localhost:8081}\n 12  \n 13  # LLM access is only through the MaaS gateway (see .opencode/skills/llm-integration.md).\n 14  # Uncomment when implementing an LLM-powered feature; the workspace injects\n 15  # the MAAS_* environment variables.\n 16  # quarkus.langchain4j.openai.base-url=${MAAS_API_BASE_URL}\n 17  # quarkus.langchain4j.openai.api-key=${MAAS_API_KEY}\n 18  # quarkus.langchain4j.openai.chat-model.model-name=${MAAS_MODEL_NAME}\n 19  # quarkus.langchain4j.openai.chat-model.temperature=0.1\n 20  # quarkus.langchain4j.openai.timeout=60s\n",
+						"lineNumber": 18,
 						"variables": {
 							"matchingText": "${MAAS_MODEL_NAME}"
 						}
@@ -775,6 +775,10 @@
 						"message": ""
 					},
 					{
+						"uri": "file:///projects/modernized/src/main/java/com/demo/rest/RootEndpoint.java",
+						"message": ""
+					},
+					{
 						"uri": "file:///projects/modernized/src/main/java/com/demo/service/CatalogService.java",
 						"message": ""
 					},
@@ -812,6 +816,10 @@
 					},
 					{
 						"uri": "file:///projects/modernized/src/test/java/com/demo/rest/CatalogWireMockResource.java",
+						"message": ""
+					},
+					{
+						"uri": "file:///projects/modernized/src/test/java/com/demo/rest/HealthEndpointTest.java",
 						"message": ""
 					},
 					{
@@ -3030,8 +3038,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 						"message": "",
-						"codeSnip": "\n14  import jakarta.ws.rs.core.MediaType;\n15  import jakarta.ws.rs.core.Response;\n16  \n17  import org.eclipse.microprofile.rest.client.inject.RestClient;\n18  \n19  import com.demo.model.Product;\n20  import com.demo.model.ShoppingCart;\n21  import com.demo.service.CatalogService;\n22  import com.demo.service.ShoppingCartService;\n23  \n24  @Path(\"/cart\")\n25  public class CartEndpoint {\n26  \n27  private final ShoppingCartService shoppingCartService;\n28  private final CatalogService catalogService;\n29  \n30  public CartEndpoint(ShoppingCartService shoppingCartService, @RestClient CatalogService catalogService) {\n31  this.shoppingCartService = shoppingCartService;\n32  this.catalogService = catalogService;\n33  }\n34  ",
-						"lineNumber": 24,
+						"codeSnip": "\n15  import jakarta.ws.rs.core.Response;\n16  \n17  import org.eclipse.microprofile.rest.client.inject.RestClient;\n18  \n19  import com.demo.model.Product;\n20  import com.demo.model.ShoppingCart;\n21  import com.demo.service.CatalogService;\n22  import com.demo.service.CatalogUnavailableException;\n23  import com.demo.service.ShoppingCartService;\n24  \n25  @Path(\"/cart\")\n26  public class CartEndpoint {\n27  \n28  private final ShoppingCartService shoppingCartService;\n29  private final CatalogService catalogService;\n30  \n31  public CartEndpoint(ShoppingCartService shoppingCartService, @RestClient CatalogService catalogService) {\n32  this.shoppingCartService = shoppingCartService;\n33  this.catalogService = catalogService;\n34  }\n35  ",
+						"lineNumber": 25,
 						"variables": {
 							"file": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 							"kind": "Property",
@@ -3042,8 +3050,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 						"message": "",
-						"codeSnip": "\n26  \n27  private final ShoppingCartService shoppingCartService;\n28  private final CatalogService catalogService;\n29  \n30  public CartEndpoint(ShoppingCartService shoppingCartService, @RestClient CatalogService catalogService) {\n31  this.shoppingCartService = shoppingCartService;\n32  this.catalogService = catalogService;\n33  }\n34  \n35  @GET\n36  @Path(\"/{cartId}\")\n37  @Produces(MediaType.APPLICATION_JSON)\n38  public Response getCart(@PathParam(\"cartId\") String cartId) {\n39  requireCartId(cartId);\n40  ShoppingCart cart = shoppingCartService.getShoppingCart(cartId);\n41  if (cart.getShoppingCartItemList().isEmpty()) {\n42  throw new NotFoundException(\"Cart not found: \" + cartId);\n43  }\n44  return Response.ok(cart).build();\n45  }\n46  ",
-						"lineNumber": 36,
+						"codeSnip": "\n27  \n28  private final ShoppingCartService shoppingCartService;\n29  private final CatalogService catalogService;\n30  \n31  public CartEndpoint(ShoppingCartService shoppingCartService, @RestClient CatalogService catalogService) {\n32  this.shoppingCartService = shoppingCartService;\n33  this.catalogService = catalogService;\n34  }\n35  \n36  @GET\n37  @Path(\"/{cartId}\")\n38  @Produces(MediaType.APPLICATION_JSON)\n39  public Response getCart(@PathParam(\"cartId\") String cartId) {\n40  requireCartId(cartId);\n41  ShoppingCart cart = shoppingCartService.getShoppingCart(cartId);\n42  if (cart.getShoppingCartItemList().isEmpty()) {\n43  throw new NotFoundException(\"Cart not found: \" + cartId);\n44  }\n45  return Response.ok(cart).build();\n46  }\n47  ",
+						"lineNumber": 37,
 						"variables": {
 							"file": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 							"kind": "Property",
@@ -3054,8 +3062,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 						"message": "",
-						"codeSnip": "\n38  public Response getCart(@PathParam(\"cartId\") String cartId) {\n39  requireCartId(cartId);\n40  ShoppingCart cart = shoppingCartService.getShoppingCart(cartId);\n41  if (cart.getShoppingCartItemList().isEmpty()) {\n42  throw new NotFoundException(\"Cart not found: \" + cartId);\n43  }\n44  return Response.ok(cart).build();\n45  }\n46  \n47  @POST\n48  @Path(\"/{cartId}/{itemId}/{quantity}\")\n49  @Produces(MediaType.APPLICATION_JSON)\n50  public Response addItem(@PathParam(\"cartId\") String cartId,\n51  @PathParam(\"itemId\") String itemId,\n52  @PathParam(\"quantity\") int quantity) {\n53  requireCartId(cartId);\n54  requireItemId(itemId);\n55  requirePositiveQuantity(quantity);\n56  ShoppingCart cart = shoppingCartService.addItem(cartId, itemId, quantity);\n57  return Response.ok(cart).build();\n58  }",
-						"lineNumber": 48,
+						"codeSnip": "\n39  public Response getCart(@PathParam(\"cartId\") String cartId) {\n40  requireCartId(cartId);\n41  ShoppingCart cart = shoppingCartService.getShoppingCart(cartId);\n42  if (cart.getShoppingCartItemList().isEmpty()) {\n43  throw new NotFoundException(\"Cart not found: \" + cartId);\n44  }\n45  return Response.ok(cart).build();\n46  }\n47  \n48  @POST\n49  @Path(\"/{cartId}/{itemId}/{quantity}\")\n50  @Produces(MediaType.APPLICATION_JSON)\n51  public Response addItem(@PathParam(\"cartId\") String cartId,\n52  @PathParam(\"itemId\") String itemId,\n53  @PathParam(\"quantity\") int quantity) {\n54  requireCartId(cartId);\n55  requireItemId(itemId);\n56  requirePositiveQuantity(quantity);\n57  ShoppingCart cart = shoppingCartService.addItem(cartId, itemId, quantity);\n58  return Response.ok(cart).build();\n59  }",
+						"lineNumber": 49,
 						"variables": {
 							"file": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 							"kind": "Property",
@@ -3066,8 +3074,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 						"message": "",
-						"codeSnip": "\n51  @PathParam(\"itemId\") String itemId,\n52  @PathParam(\"quantity\") int quantity) {\n53  requireCartId(cartId);\n54  requireItemId(itemId);\n55  requirePositiveQuantity(quantity);\n56  ShoppingCart cart = shoppingCartService.addItem(cartId, itemId, quantity);\n57  return Response.ok(cart).build();\n58  }\n59  \n60  @POST\n61  @Path(\"/{cartId}/{tmpId}\")\n62  @Produces(MediaType.APPLICATION_JSON)\n63  public Response setCart(@PathParam(\"cartId\") String cartId,\n64  @PathParam(\"tmpId\") String tmpId) {\n65  requireCartId(cartId);\n66  requireItemId(tmpId);\n67  ShoppingCart cart = shoppingCartService.set(cartId, tmpId);\n68  return Response.ok(cart).build();\n69  }\n70  \n71  @DELETE",
-						"lineNumber": 61,
+						"codeSnip": "\n52  @PathParam(\"itemId\") String itemId,\n53  @PathParam(\"quantity\") int quantity) {\n54  requireCartId(cartId);\n55  requireItemId(itemId);\n56  requirePositiveQuantity(quantity);\n57  ShoppingCart cart = shoppingCartService.addItem(cartId, itemId, quantity);\n58  return Response.ok(cart).build();\n59  }\n60  \n61  @POST\n62  @Path(\"/{cartId}/{tmpId}\")\n63  @Produces(MediaType.APPLICATION_JSON)\n64  public Response setCart(@PathParam(\"cartId\") String cartId,\n65  @PathParam(\"tmpId\") String tmpId) {\n66  requireCartId(cartId);\n67  requireItemId(tmpId);\n68  ShoppingCart cart = shoppingCartService.set(cartId, tmpId);\n69  return Response.ok(cart).build();\n70  }\n71  \n72  @DELETE",
+						"lineNumber": 62,
 						"variables": {
 							"file": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 							"kind": "Property",
@@ -3078,8 +3086,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 						"message": "",
-						"codeSnip": "\n62  @Produces(MediaType.APPLICATION_JSON)\n63  public Response setCart(@PathParam(\"cartId\") String cartId,\n64  @PathParam(\"tmpId\") String tmpId) {\n65  requireCartId(cartId);\n66  requireItemId(tmpId);\n67  ShoppingCart cart = shoppingCartService.set(cartId, tmpId);\n68  return Response.ok(cart).build();\n69  }\n70  \n71  @DELETE\n72  @Path(\"/{cartId}/{itemId}/{quantity}\")\n73  @Produces(MediaType.APPLICATION_JSON)\n74  public Response deleteItem(@PathParam(\"cartId\") String cartId,\n75  @PathParam(\"itemId\") String itemId,\n76  @PathParam(\"quantity\") int quantity) {\n77  requireCartId(cartId);\n78  requireItemId(itemId);\n79  requirePositiveQuantity(quantity);\n80  ShoppingCart cart = shoppingCartService.deleteItem(cartId, itemId, quantity);\n81  return Response.ok(cart).build();\n82  }",
-						"lineNumber": 72,
+						"codeSnip": "\n63  @Produces(MediaType.APPLICATION_JSON)\n64  public Response setCart(@PathParam(\"cartId\") String cartId,\n65  @PathParam(\"tmpId\") String tmpId) {\n66  requireCartId(cartId);\n67  requireItemId(tmpId);\n68  ShoppingCart cart = shoppingCartService.set(cartId, tmpId);\n69  return Response.ok(cart).build();\n70  }\n71  \n72  @DELETE\n73  @Path(\"/{cartId}/{itemId}/{quantity}\")\n74  @Produces(MediaType.APPLICATION_JSON)\n75  public Response deleteItem(@PathParam(\"cartId\") String cartId,\n76  @PathParam(\"itemId\") String itemId,\n77  @PathParam(\"quantity\") int quantity) {\n78  requireCartId(cartId);\n79  requireItemId(itemId);\n80  requirePositiveQuantity(quantity);\n81  ShoppingCart cart = shoppingCartService.deleteItem(cartId, itemId, quantity);\n82  return Response.ok(cart).build();\n83  }",
+						"lineNumber": 73,
 						"variables": {
 							"file": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 							"kind": "Property",
@@ -3090,8 +3098,8 @@
 					{
 						"uri": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 						"message": "",
-						"codeSnip": "\n75  @PathParam(\"itemId\") String itemId,\n76  @PathParam(\"quantity\") int quantity) {\n77  requireCartId(cartId);\n78  requireItemId(itemId);\n79  requirePositiveQuantity(quantity);\n80  ShoppingCart cart = shoppingCartService.deleteItem(cartId, itemId, quantity);\n81  return Response.ok(cart).build();\n82  }\n83  \n84  @POST\n85  @Path(\"/checkout/{cartId}\")\n86  @Produces(MediaType.APPLICATION_JSON)\n87  public Response checkout(@PathParam(\"cartId\") String cartId) {\n88  requireCartId(cartId);\n89  ShoppingCart cart = shoppingCartService.checkout(cartId);\n90  return Response.ok(cart).build();\n91  }\n92  \n93  @GET\n94  @Path(\"/acceptance-check\")\n95  @Produces(MediaType.APPLICATION_JSON)",
-						"lineNumber": 85,
+						"codeSnip": "\n76  @PathParam(\"itemId\") String itemId,\n77  @PathParam(\"quantity\") int quantity) {\n78  requireCartId(cartId);\n79  requireItemId(itemId);\n80  requirePositiveQuantity(quantity);\n81  ShoppingCart cart = shoppingCartService.deleteItem(cartId, itemId, quantity);\n82  return Response.ok(cart).build();\n83  }\n84  \n85  @POST\n86  @Path(\"/checkout/{cartId}\")\n87  @Produces(MediaType.APPLICATION_JSON)\n88  public Response checkout(@PathParam(\"cartId\") String cartId) {\n89  requireCartId(cartId);\n90  ShoppingCart cart = shoppingCartService.checkout(cartId);\n91  return Response.ok(cart).build();\n92  }\n93  \n94  @GET\n95  @Path(\"/acceptance-check\")\n96  @Produces(MediaType.APPLICATION_JSON)",
+						"lineNumber": 86,
 						"variables": {
 							"file": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 							"kind": "Property",
@@ -3102,12 +3110,24 @@
 					{
 						"uri": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 						"message": "",
-						"codeSnip": "\n 84  @POST\n 85  @Path(\"/checkout/{cartId}\")\n 86  @Produces(MediaType.APPLICATION_JSON)\n 87  public Response checkout(@PathParam(\"cartId\") String cartId) {\n 88  requireCartId(cartId);\n 89  ShoppingCart cart = shoppingCartService.checkout(cartId);\n 90  return Response.ok(cart).build();\n 91  }\n 92  \n 93  @GET\n 94  @Path(\"/acceptance-check\")\n 95  @Produces(MediaType.APPLICATION_JSON)\n 96  public List\u003cProduct\u003e acceptanceCheck() {\n 97  return catalogService.products();\n 98  }\n 99  \n100  private void requireCartId(String cartId) {\n101  if (cartId == null || cartId.trim().isEmpty()) {\n102  throw badRequest(\"cartId is required\");\n103  }\n104  }",
-						"lineNumber": 94,
+						"codeSnip": "\n 85  @POST\n 86  @Path(\"/checkout/{cartId}\")\n 87  @Produces(MediaType.APPLICATION_JSON)\n 88  public Response checkout(@PathParam(\"cartId\") String cartId) {\n 89  requireCartId(cartId);\n 90  ShoppingCart cart = shoppingCartService.checkout(cartId);\n 91  return Response.ok(cart).build();\n 92  }\n 93  \n 94  @GET\n 95  @Path(\"/acceptance-check\")\n 96  @Produces(MediaType.APPLICATION_JSON)\n 97  public Response acceptanceCheck() {\n 98  try {\n 99  List\u003cProduct\u003e products = catalogService.products();\n100  if (products.isEmpty()) {\n101  throw new CatalogUnavailableException(\"Catalog returned no products\");\n102  }\n103  return Response.ok(products).build();\n104  } catch (Exception e) {\n105  // Ensure we get proper 503 response when catalog service fails",
+						"lineNumber": 95,
 						"variables": {
 							"file": "file:///projects/modernized/src/main/java/com/demo/rest/CartEndpoint.java",
 							"kind": "Property",
 							"name": "GET",
+							"package": "com.demo.rest"
+						}
+					},
+					{
+						"uri": "file:///projects/modernized/src/main/java/com/demo/rest/RootEndpoint.java",
+						"message": "",
+						"codeSnip": "\n 2  \n 3  import jakarta.ws.rs.GET;\n 4  import jakarta.ws.rs.Path;\n 5  import jakarta.ws.rs.Produces;\n 6  import jakarta.ws.rs.core.MediaType;\n 7  import jakarta.ws.rs.core.Response;\n 8  \n 9  import java.util.List;\n10  import java.util.Map;\n11  \n12  @Path(\"/\")\n13  public class RootEndpoint {\n14  \n15  @GET\n16  @Produces(MediaType.APPLICATION_JSON)\n17  public Response index() {\n18  return Response.ok(Map.of(\n19  \"service\", \"coolstore-cart\",\n20  \"version\", \"1.0.0\",\n21  \"endpoints\", List.of(\n22  \"/api/cart/{cartId}\",",
+						"lineNumber": 12,
+						"variables": {
+							"file": "file:///projects/modernized/src/main/java/com/demo/rest/RootEndpoint.java",
+							"kind": "Property",
+							"name": "Path",
 							"package": "com.demo.rest"
 						}
 					},
