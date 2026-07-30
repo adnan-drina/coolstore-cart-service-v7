@@ -1,0 +1,37 @@
+epoch,stage,attempt,class,action
+1785364708,T-001,1,orphan_worker,retrying
+1785364937,T-005,1,success,commit
+1785365183,T-006,1,no_commit,retrying
+1785365215,T-006,2,success,commit
+1785366024,T-009,1,success,commit
+1785366462,T-011,1,success,commit
+1785367070,T-014,1,success,commit
+1785367219,T-015,1,success,commit
+1785367764,T-017,1,success,commit
+1785368252,m5-evaluate,1,success,commit
+1785368419,m5-ship,0,pipeline_succeeded,coolstore-cart-service-v7-push-7hckh
+1785368419,m5-ship,0,story_gate_pass,non-deploy story
+1785369298,m5-ship,0,pipeline_succeeded,coolstore-cart-service-v7-push-7hckh
+1785369298,m5-ship,0,story_gate_pass,non-deploy story
+1785385288,T-001,0,already_complete,CATALOG_ENDPOINT
+1785385515,T-003,0,sensor_red_post_commit,verify
+1785385731,T-003,0,style_autofix,partial
+1785387266,T-005,1,no_commit,retrying
+1785387643,T-005,2,quota,retrying
+1785389124,T-005,2,success,commit
+1785389270,T-005,0,sensor_red_post_commit,verify
+1785389434,T-005,0,style_autofix,partial
+1785390082,m5-evaluate,1,success,commit
+1785390108,m5-ship,0,preflight_red,round=1
+1785391212,m5-ship,0,pipeline_succeeded,coolstore-cart-service-v7-push-7pbv9
+1785391212,m5-ship,0,story_gate_pass,non-deploy story
+1785393831,T-002,1,no_commit,retrying
+1785393861,T-002,2,success,commit
+1785394611,T-005,1,success,commit
+1785395319,T-007,1,quota,retrying
+1785396312,T-007,1,success,commit
+1785396444,T-008,1,success,commit
+1785397533,T-011,1,success,commit
+1785397730,m5-evaluate,1,success,commit
+1785398222,m5-ship,0,pipeline_succeeded,coolstore-cart-service-v7-push-jwvgp
+1785398222,m5-ship,0,story_gate_pass,non-deploy story
