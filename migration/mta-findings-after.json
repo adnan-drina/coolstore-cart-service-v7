@@ -749,6 +749,26 @@
 					{
 						"uri": "file:///projects/modernized/migration/staging/src/test/java/com/redhat/coolstore/service/ShoppingCartServiceTest.java",
 						"message": ""
+					},
+					{
+						"uri": "file:///projects/modernized/src/main/java/com/demo/model/Product.java",
+						"message": ""
+					},
+					{
+						"uri": "file:///projects/modernized/src/main/java/com/demo/model/Promotion.java",
+						"message": ""
+					},
+					{
+						"uri": "file:///projects/modernized/src/main/java/com/demo/model/ShoppingCart.java",
+						"message": ""
+					},
+					{
+						"uri": "file:///projects/modernized/src/main/java/com/demo/model/ShoppingCartItem.java",
+						"message": ""
+					},
+					{
+						"uri": "file:///projects/modernized/src/test/java/com/demo/model/DomainModelTest.java",
+						"message": ""
 					}
 				]
 			},

@@ -49,6 +49,6 @@ After-analysis findings from `migration/mta-findings-after.json`:
 24. `removed-javaee-modules-00020` (1 incident) - **OWNED BY LATER STORY**: Java annotation module removal impacts
 
 ### Summary
-- **16 findings RESOLVED** (configuration and dependency management)
-- **8 findings OWNED BY LATER STORIES** (source code transformation and integration patterns)
+- **17 findings RESOLVED** (configuration and dependency management) 
+- **7 findings OWNED BY LATER STORIES** (source code transformation and integration patterns)
 - **Zero GENUINE DEBT** (all remaining items have clear ownership and migration path)
