@@ -19,3 +19,6 @@ target/
 __pycache__/
 *.pyc
 ._*
+
+# Harness runtime — workspace-only; never commit (O-HERMNEST)
+.hermes/

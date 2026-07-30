@@ -17,11 +17,11 @@ import com.demo.model.ShoppingCart;
 import com.demo.service.ShoppingCartService;
 
 @Path("/cart")
-public class CartResource {
+public class CartEndpoint {
 
     private final ShoppingCartService shoppingCartService;
 
-    public CartResource(ShoppingCartService shoppingCartService) {
+    public CartEndpoint(ShoppingCartService shoppingCartService) {
         this.shoppingCartService = shoppingCartService;
     }
 
