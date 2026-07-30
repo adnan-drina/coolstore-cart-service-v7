@@ -7,6 +7,7 @@
 **Target design**:
 - Directory: src/main/java/com/demo/service/
 **Acceptance**: Directory exists; subsequent tasks can place files here
+- Trackable marker: `src/main/java/com/demo/service/.gitkeep` (O-PKGDIR — empty dirs are not git-committable).
 
 #### T-002: Confirm Quarkus metrics extension replaces Spring Actuator/Micrometer
 **Class**: rewrite
