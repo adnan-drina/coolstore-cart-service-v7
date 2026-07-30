@@ -191,12 +191,8 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             cart.setShoppingCartItemList(tmpCart.getShoppingCartItemList());
         }
 
-        try {
-            priceShoppingCart(cart);
-            cart.setShoppingCartItemList(dedupeCartItems(cart));
-        } catch (Exception ex) {
-            throw ex;
-        }
+        priceShoppingCart(cart);
+        cart.setShoppingCartItemList(dedupeCartItems(cart));
 
         carts.put(cartId, cart);
         return cart;
@@ -213,10 +209,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             }
         }
 
-        for (String itemId : quantityMap.keySet()) {
+        for (Map.Entry<String, Integer> entry : quantityMap.entrySet()) {
+            String itemId = entry.getKey();
             Product p = getProduct(itemId);
             ShoppingCartItem newItem = new ShoppingCartItem();
-            newItem.setQuantity(quantityMap.get(itemId));
+            newItem.setQuantity(entry.getValue());
             newItem.setPrice(p.getPrice());
             newItem.setProduct(p);
             result.add(newItem);

@@ -75,7 +75,8 @@ class PromoServiceTest {
         assertEquals("329299", p.getItemId());
         assertEquals(0.25, p.getPercentOff(), 0.001);
 
-        assertThrows(UnsupportedOperationException.class, () -> promotions.add(new Promotion("FAKE", 0.1)));
+        Promotion fake = new Promotion("FAKE", 0.1);
+        assertThrows(UnsupportedOperationException.class, () -> promotions.add(fake));
     }
 
     @Test
