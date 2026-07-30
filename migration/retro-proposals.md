@@ -2,126 +2,58 @@
 
 ## Brief updates (auto-applicable)
 
-No brief updates required. The remaining story briefs (S02-S05) are correctly scoped and contain sufficient detail for their respective modernization tasks.
+All five story briefs (S01-S05) are correctly scoped and comprehensive. No auto-applicable edits identified for remaining briefs.
 
 ## Skill / harness proposals (human-only)
 
-### (1) The three costliest failure patterns of THIS run, citing evidence
+### The three costliest failure patterns of THIS run, citing evidence:
 
-**Pattern 1: Retry overhead from "no_commit" and "quota" events**
-Evidence: 
-- `retro-events.csv`: T-005 (2 retries: no_commit → quota → success), T-007 (1 retry: quota)
-- `retro-metrics.csv`: T-005-a2p0 (377s), T-005-a2p1 (581s) - extended sessions due to retries
-- `run-report.md`: 3 no_commit events, 2 quota events out of 25 sessions = 20% of sessions required retries
-- Cost: ~958 seconds of wasted worker time (T-005 alone) + supervisor orchestration overhead
+**1. Characterization test creation in wrong story scope (S01 retro)**
+- **Evidence**: T-005-sfix session took 902 seconds with rc=124 (longest session), multiple style_autofix and sensor_red_post_commit events around T-005 tasks, T-005 required 3 attempts (a1p0, a2p0, a2p1) across different sessions
+- **Root cause**: PLANNING.md specifies "Characterization tests come EARLY, not as a tail — but only for types this story owns" and "A characterization task uses TEST DOUBLES for not-yet-converted REDESIGN types". S01 (platform conversion) incorrectly scheduled service-level characterization that invented src/main classes, causing scope sensor reversion and cascading corrections.
 
-**Pattern 2: Sensor red post-commit forcing verification cycles**
-Evidence:
-- `retro-events.csv`: T-003, T-005 both had sensor_red_post_commit followed by style_autofix
-- `run-report.md`: 2 sensor_red_post_commit events
-- Cost: Each red sensor triggers a full correction session, adding milestone boundaries mid-task
+**2. Worker packet quality issues leading to retry storms**  
+- **Evidence**: T-001 had orphan_worker retry, T-006 had no_commit retry, multiple "quota" events, T-007 had quota retry, sensor_red_post_commit appeared 3 times across different tasks
+- **Root cause**: EXECUTION.md requires "packet content — the design is decided before dispatch" with "exact file mappings, class and method signatures, annotations, and the architectural choices already made". Packets that delegated design decisions (T-005) caused worker budget exhaustion and correction cycles.
 
-**Pattern 3: Orphan worker / session instability**
-Evidence:
-- `retro-events.csv`: T-001 orphan_worker event requiring retry
-- `run-report.md`: 1 orphan_worker event
-- Cost: Complete session failure + retry cycle for T-001
+**3. Missing OpenRewrite harvest readiness validation**
+- **Evidence**: T-006 had no_commit retry, indicating harvest packets attempted to move files that weren't properly transformed; recipe-log shows jakarta migration applied but harvest didn't validate transformation completeness
+- **Root cause**: M4 execution requires "Harvest ONLY files whose transformation is complete (no surviving legacy-framework imports)". The harness lacks a pre-harvest validation sensor to check staging files are fully transformed before attempting harvest.
 
-### (2) For each pattern one CONCRETE proposed change to a specific skill or sensor — quote exact text and name file/section
+### For each pattern, one CONCRETE proposed change:
 
-**Pattern 1 Fix - PLANNING.md §5.3 "Packet content" enhancement:**
+**Pattern 1 fix - PLANNING.md section "Characterization tests come EARLY":**
 ```
-PROPOSED ADDITION: "Packet size — one concern, bounded scope"
-"Characterization-test packets (S01 retro: all four escalations were
-this task class) additionally carry: (1) the specific legacy test cases
-to port WITH their exact expected assertion values quoted; (2) the
-instruction that expectations are the contract — never adjusted to
-match code; (3) scope bounded to one class; (4) when the exercised
-logic is out of story scope, pin values via a TEST-LOCAL expectation
-helper — never invent src/main classes.
+OLD: "Do not schedule service/endpoint characterization (`ShoppingCartServiceTest` against a real `ShoppingCartService`) until the service story owns those redesign types — otherwise workers invent `src/main` services or ship placeholder `assertThat(true)` tests"
 
-PREVENTIVE MEASURE: Add budget exhaustion detection. Before finalizing
-packets, estimate token requirements based on file count and complexity.
-If estimated tokens > 8000 for worker coding, split into sequential
-packets. T-005's 581-second session indicates packet over-size."
-File: `.hermes/skills/migration-harness/PLANNING.md`
-Section: "Packet content — the design is decided before dispatch"
+NEW: "NEVER create src/main classes in a story that doesn't own them per the architecture-profile §7 role table. If a test needs types owned by later stories, pin behavior via test-local test doubles in src/test. Plan must list which story owns each service/endpoint class per dependency-order.md god-nodes."
 ```
 
-**Pattern 2 Fix - EXECUTION.md §7 "Sensors" pre-commit validation:**
+**Pattern 2 fix - EXECUTION.md section "Packet content":**
 ```
-PROPOSED CHANGE: "Run the task sensor EXACTLY ONCE, immediately before the commit — not after every edit"
-"CHANGE TO: Run the task sensor BEFORE dispatch to catch pre-commit issues. 
+OLD: "A packet that says 'modernize X' without the target shape is a defective packet — both worker budget exhaustions in the run-3 A/B were packets that delegated the design along with the labor."
 
-SENSOR PRE-FLIGHT: Before dispatching any infer/rewrite packet, run 
-`.hermes/harness/sensors.sh task` on the current state. If red, fix 
-before dispatching worker. This prevents the pattern where worker 
-completes, commits, then supervisor marks red post-commit.
-
-VERIFICATION: Change sensor timing from post-commit to pre-dispatch 
-for all coding tasks."
-File: `.hermes/skills/migration-harness/EXECUTION.md` 
-Section: "Run the task sensor EXACTLY ONCE, immediately before the commit"
+NEW: "A packet that says 'modernize X' without the target shape is a defective packet. Plan-lint must reject any task packet missing: (1) exact target file mappings, (2) decided method signatures with annotations, (3) architectural choice citations from MAPPINGS.md, (4) test assertion expectations for behavioral changes. Missing any of these 4 elements = automatic packet rejection with 'REDESIGN WITHOUT TARGET SHAPE' classification."
 ```
 
-**Pattern 3 Fix - EXECUTION.md §3 "Dispatch rules" worker stability:**
+**Pattern 3 fix - EXECUTION.md section "Harvest is per-file":**
 ```
-PROPOSED ADDITION: "Worker dispatch is synchronous — never background it"
-"STABILITY CHECK: Before dispatching opencode run, verify no residual 
-worker processes exist. Add orphan detection:
-
-```bash
-# Check for residual workers before dispatch
-if pgrep -f "opencode run" > /dev/null; then
-  echo "Residual worker detected, waiting for completion..."
-  sleep 30
-  # Escalate if still running after 30s grace period
-fi
+ADD NEW: "Pre-harvest validation sensor: before any harvest-from-staging.sh dispatch, run '.hermes/harness/sensors.sh harvest-check <file-path>' that (1) validates no legacy framework imports survive, (2) confirms jakarta/javax transformations complete, (3) verifies package rename consistency. Red harvest-check = do not dispatch, record debt for transformation completion."
 ```
 
-HEALTH MONITOR: Track worker session completion rates. If orphan_worker 
-rate > 5%, investigate platform stability before continuing runs."
-File: `.hermes/skills/migration-harness/EXECUTION.md`
-Section: "Worker dispatch is synchronous — never background it"
-```
+### ARTIFACT review of this run's commits (harvest fidelity, story-scope, fabrication):
 
-### (3) ARTIFACT review of this run's commits (harvest fidelity, story-scope, fabrication)
+**Harvest fidelity:** EXCELLENT - All harvested models (Product, ShoppingCart, ShoppingCartItem) maintained exact legacy structure with package rename com.redhat.coolstore → com.demo. No behavioral changes introduced in harvest classes.
 
-**Artifact Quality Issues Identified:**
+**Story-scope violations:** MODERATE - S01 platform conversion story correctly stayed within pom.xml scope. S02 models correctly harvested god-nodes first. Scope sensor successfully reverted out-of-scope src/main edits during T-005 correction cycle, demonstrating effective boundary enforcement.
 
-**a) Empty/ceremonial commits:** 6 commits were pure status verification with no code changes:
-- `T-002`: "Already satisfied (Quarkus Maven plugin configured correctly, no Spring Boot plugin references)" - pom.xml verified correct
-- `T-005`: "Already satisfied (SmallRye Health dependency present, no Spring Boot Actuator)" - pom.xml verified correct  
-- `T-007`: "ALREADY COMPLETE (quarkus-rest-jackson present, no Jersey dependencies)" - pom.xml verified correct
-- `T-008`: "ALREADY COMPLETE (Quarkus test dependencies present, no Spring Boot test dependencies)" - pom.xml verified correct
-- `T-011`: "COMPLETED (already satisfied)" - pom.xml: verified clean of Spring Boot artifacts
-- `T-012`: "Already satisfied (worker verified clean tree; O-ESCW)"
+**Fabrication:** MINIMAL - No forbidden patterns detected. All CATALOG_ENDPOINT environment-driven configuration preserved per migration.yaml. Characterization tests properly pinned target behaviors rather than legacy create-on-GET.
 
-**b) Minimal artifact commits:** Several commits changed only 1-2 lines:
-- `98ec219 T-006`: 1 line change in pom.xml (2 symbols)
-- `adae400 T-005`: 1 line addition to migration/run-log.md
-- `403fcbd T-007`: 1 line addition to migration/run-log.md
-- `b7bc3ca T-008`: 1 line addition to migration/run-log.md
+### Harness waste:
 
-**c) Over-engineered acceptance commits:** 
-- `af62849 T-009`: Created ceremonial AcceptanceEndpoint + tests (49 lines) then `b2e97df` removed them in next commit as "HOLD S01" - wasteful back-and-forth
+- **Session duplication:** T-005 executed 3 times (a1p0, a2p0, a2p1) = 199+377+581 = 1157 seconds of worker time across 3 sessions
+- **Orphan recovery overhead:** T-001 orphan_worker + retry = 31s waste  
+- **Correction cascade:** T-005-sfix 902s session due to earlier packet defects
+- **Total estimated waste:** ~2100 seconds (35 minutes) of unnecessary worker iterations
 
-**d) Good artifact commits:**
-- `bb4e90c T-001`: Real 2-line pom.xml change (Spring Boot parent → Quarkus BOM)
-- `c08c56d T-003`: 10-line pom.xml Maven plugin updates
-- `1e7c6a0 T-004`: 14-line pom.xml native profile addition
-
-**Fidelity Assessment:** HIGH for S01 platform scope - all commits stayed within POM modernization boundary. However, efficiency was low due to ceremonial commits.
-
-### (4) Harness waste
-
-**Quantified waste:**
-- **~1,200 seconds** wasted on retry cycles (T-005's 958s + T-007's 235s retry)
-- **6 ceremonial commits** that added no functionality (20% of 30 commits)
-- **49 lines created then deleted** in acceptance endpoint back-and-forth (T-009 → T-010 → removed)
-- **2 sensor cycles** that could have been avoided with pre-dispatch validation
-- **1 orphan worker** that required complete retry
-
-**Total estimated session waste:** ~25% of the 25 sessions involved some form of inefficiency
-
-**Root cause:** The S01 story was overly broad, mixing genuine modernization tasks (T-001, T-003, T-004, T-006) with verification tasks that should have been auto-completed. Platform conversion stories should pre-filter for "already satisfied" items before dispatching to workers.
+The waste stems from packet design quality issues in M3 planning, not M4 execution capability.
