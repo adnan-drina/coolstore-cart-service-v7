@@ -120,7 +120,7 @@ class CartEndpointTest {
             .post("/api/cart/{cartId}/{itemId}/{quantity}")
             .then()
             .statusCode(400)
-            .body("status", equalTo(400))
+            .body("httpStatus", equalTo(400))
             .body("title", equalTo("Bad Request"));
     }
 
@@ -134,7 +134,7 @@ class CartEndpointTest {
             .post("/api/cart/{cartId}/{itemId}/{quantity}")
             .then()
             .statusCode(400)
-            .body("status", equalTo(400))
+            .body("httpStatus", equalTo(400))
             .body("title", equalTo("Bad Request"));
     }
 
@@ -227,7 +227,7 @@ class CartEndpointTest {
             .delete("/api/cart/{cartId}/{itemId}/{quantity}")
             .then()
             .statusCode(400)
-            .body("status", equalTo(400))
+            .body("httpStatus", equalTo(400))
             .body("title", equalTo("Bad Request"));
     }
 

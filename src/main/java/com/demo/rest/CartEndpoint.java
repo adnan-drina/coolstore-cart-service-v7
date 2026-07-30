@@ -119,7 +119,7 @@ public class CartEndpoint {
         return new WebApplicationException(
             Response.status(400)
                 .type("application/problem+json")
-                .entity(Map.of("status", 400, "title", "Bad Request", "detail", detail))
+                .entity(Map.of("httpStatus", 400, "title", "Bad Request", "detail", detail))
                 .build());
     }
 }
