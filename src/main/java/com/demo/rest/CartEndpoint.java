@@ -1,6 +1,5 @@
 package com.demo.rest;
 
-import java.util.List;
 import java.util.Map;
 
 import jakarta.ws.rs.DELETE;
@@ -14,23 +13,16 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-
-import com.demo.model.Product;
 import com.demo.model.ShoppingCart;
-import com.demo.service.CatalogService;
-import com.demo.service.CatalogUnavailableException;
 import com.demo.service.ShoppingCartService;
 
 @Path("/cart")
 public class CartEndpoint {
 
     private final ShoppingCartService shoppingCartService;
-    private final CatalogService catalogService;
 
-    public CartEndpoint(ShoppingCartService shoppingCartService, @RestClient CatalogService catalogService) {
+    public CartEndpoint(ShoppingCartService shoppingCartService) {
         this.shoppingCartService = shoppingCartService;
-        this.catalogService = catalogService;
     }
 
     @GET
@@ -89,22 +81,6 @@ public class CartEndpoint {
         requireCartId(cartId);
         ShoppingCart cart = shoppingCartService.checkout(cartId);
         return Response.ok(cart).build();
-    }
-
-    @GET
-    @Path("/acceptance-check")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response acceptanceCheck() {
-        try {
-            List<Product> products = catalogService.products();
-            if (products.isEmpty()) {
-                throw new CatalogUnavailableException("Catalog returned no products");
-            }
-            return Response.ok(products).build();
-        } catch (Exception e) {
-            // Ensure we get proper 503 response when catalog service fails
-            throw new CatalogUnavailableException("Catalog service unavailable: " + e.getMessage());
-        }
     }
 
     private void requireCartId(String cartId) {

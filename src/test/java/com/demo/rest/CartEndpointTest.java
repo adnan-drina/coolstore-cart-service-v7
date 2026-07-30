@@ -350,32 +350,4 @@ class CartEndpointTest {
             .header("Content-Type", containsString("application/problem+json"));
     }
 
-    // ---- GET /cart/acceptance-check ----
-
-    @Test
-    void acceptanceCheckReturnsProducts() {
-        given()
-            .when()
-            .get("/api/cart/acceptance-check")
-            .then()
-            .statusCode(200)
-            .body("size()", equalTo(2))
-            .body("[0].itemId", equalTo("329299"))
-            .body("[1].itemId", equalTo("999999"));
-    }
-
-    @Test
-    void acceptanceCheckReturns503WhenCatalogDown() {
-        WireMockServer server = CatalogWireMockResource.getServer();
-        server.resetAll();
-        server.stubFor(get(urlEqualTo("/api/products"))
-            .willReturn(com.github.tomakehurst.wiremock.client.WireMock.aResponse()
-                .withStatus(503)));
-
-        given()
-            .when()
-            .get("/api/cart/acceptance-check")
-            .then()
-            .statusCode(503);
-    }
 }
