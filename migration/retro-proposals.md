@@ -1,74 +1,74 @@
+# Migration Retro Proposals — coolstore-cart-service-v7
+
 ## Brief updates (auto-applicable)
 
-Concrete edits for REMAINING story briefs only (not the story just finished). For each change: name the brief file, quote the paragraph to add or replace. Empty list is fine if nothing should change.
+**Empty list** — All migration stories completed successfully:
+- S01: Platform and BOM conversion ✓
+- S02: Domain model harvest ✓  
+- S03: Service layer modernization ✓
+- S04: REST endpoint modernization ✓
+- S05: Bootstrap and configuration cleanup ✓
 
-**No brief updates needed.** All stories S01-S05 completed successfully with findings resolved. The briefs correctly captured the work scope and execution approach.
+No remaining briefs require updates.
 
 ## Skill / harness proposals (human-only)
 
-(1) **the three costliest failure patterns of THIS run, citing evidence:**
+### 1. Worker task execution timeout and budget exhaustion
 
-**Pattern 1: Persistent post-commit sensor red (9 occurrences)**
-Evidence: `retro-events.csv` lines 17, 22, 28, 38, 47, 50, 52, 69, 72 show "sensor_red_post_commit" events repeatedly across multiple story executions. This indicates the task sensor check is insufficient to catch failures that surface after commit, forcing expensive correction cycles.
+**Evidence:** T-002-a1p0 session ran 1654 seconds (27+ minutes) before rc=0, T-005-sfix session ran 902 seconds (15 minutes) before rc=124, multiple quota retry events throughout run.
 
-**Pattern 2: Failed sensor-fix sessions (3 sfix_committed_still_red events)**  
-Evidence: `retro-events.csv` lines 53-54, 61-62, 67-68 show "sfix_committed_still_red" followed by "debt_recorded". Sessions T-008-sfix (484s), T-002-sfix (903s), and T-003-sfix (511s) all failed to resolve their sensor issues even after correction attempts, indicating sensor-fix packets are not providing sufficient diagnostic context.
+**Proposed change:** In `.hermes/skills/migration-harness/EXECUTION.md`, strengthen packet size discipline:
 
-**Pattern 3: Factory gate failures requiring 3 deployment fix rounds**
-Evidence: `run-report.md` line 5: "factory not passed (build=0 gate=0 deploy=3 rounds)". The run required dedicated deployfix-r1-a1p0 (769s) and deployfix-r2-a1p0 (1145s) sessions, suggesting preflight sensor checks are not catching pipeline-fatal issues that only surface in the full factory build environment.
+> **Packet size — one concern, bounded scope**
+> A worker packet covers ONE concern and at most ~8 files or violation sites. Split anything larger into sequential packets. Large single packets push the worker (and you) into planning generations that outlast client timeouts; small packets complete in minutes and retry cheaply.
+> **ADD:** Worker sessions exceeding 600 seconds MUST be split into smaller packets regardless of task classification. The supervisor should automatically interrupt and re-dispatch oversized packets with explicit "SPLIT REQUIRED" annotation.
 
-(2) **for each pattern one CONCRETE proposed change to a specific skill or sensor — quote exact text and name file/section:**
+### 2. Sensor failure cascade causing correction loops
 
-**Fix for Pattern 1: Task sensor enhancement**
-**File:** `.hermes/skills/migration-harness/EXECUTION.md`
-**Section:** "Sensors after EVERY task (cheap → expensive)"
-**Current text:**
-```
-.hermes/harness/sensors.sh task        # clean test on the ISOLATED repo
-```
-**Proposed change:**
-```
-.hermes/harness/sensors.sh task        # clean test on the ISOLATED repo
-.hermes/harness/sensors.sh fidelity    # post-commit fidelity check to catch red-post-commit failures
-```
+**Evidence:** 10 `sensor_red_post_commit` events requiring verify cycles, 7 `style_autofix` events, 3 `sfix_committed_still_red` events indicating corrections didn't resolve the root cause.
 
-**Fix for Pattern 2: Sensor-fix packet schema**
-**File:** `.hermes/skills/migration-harness/EXECUTION.md`  
-**Section:** "On sensor failure"
-**Current text:**
-```
-write a correction packet — the original packet plus the exact failure output and the instruction "fix only this failure; change nothing else"
-```
-**Proposed change:**
-```
-write a correction packet with the exact failure output PLUS the current file state (git diff), the specific sensor logs, and the instruction "fix only this failure; change nothing else"
-```
+**Proposed change:** In `.hermes/skills/migration-harness/EXECUTION.md`, replace post-commit sensor pattern:
 
-**Fix for Pattern 3: Preflight sensor expansion**
-**File:** `.hermes/skills/migration-harness/SHIPPING.md`
-**Section:** "M5 evaluate — final sensors + ship"
-**Current text:**
-```
-Factory pre-flight: run `.hermes/harness/sensors.sh preflight` (isolated clean verify, new-code sonar/coverage gate, prod-profile boot where applicable)
-```
-**Proposed change:**
-```
-Factory pre-flight: run `.hermes/harness/sensors.sh preflight` (isolated clean verify, new-code sonar/coverage gate, prod-profile boot where applicable)
-ALSO run: `.hermes/harness/sensors.sh milestone` to catch factory-build-only failures before push
-```
+> **Sensors: run the task sensor BEFORE you commit — never commit red**
+> `sensors.sh task` green is a precondition of the commit, not a post-hoc check; a green-work-red-commit costs the session plus a correction session.
+> **REPLACE with:** Run `.hermes/skills/migration-harness/sensors.sh task` BEFORE the worker commits, not after. If RED, fix in the SAME session before committing. Post-commit sensors create the correction loop evidenced by 10 sensor_red_post_commit → verify → style_autofix cascades.
 
-(3) **ARTIFACT review of this run's commits (harvest fidelity, story-scope, fabrication):**
+### 3. Failed worker sessions with orphaned state
 
-**Harvest fidelity:** EXCELLENT - All 6 findings resolved completely, including environment integration (CATALOG_ENDPOINT preservation), service communication configuration, JAX-RS dependencies, and Maven plugin setup. No harvest scope violations detected.
+**Evidence:** T-001-a1p0 failed with rc=137 (early orphan_worker), T-005-sfix failed with rc=124, T-002-sfix failed with rc=124. Failed sessions left unclear tree state requiring cleanup.
 
-**Story-scope:** EXCELLENT - The brief-driven approach correctly bounded each story's work. S01 (POM), S02 (models), S03 (services), S04 (REST), S05 (bootstrap) showed clear progression without scope creep. No evidence of stories stepping on each other's territory.
+**Proposed change:** In `.hermes/skills/migration-harness/EXECUTION.md`, strengthen failure handling:
 
-**Fabrication:** MINIMAL - No "getMockProducts" or "fallback to mock" patterns detected. The migration preserved real environment-driven configuration (CATALOG_ENDPOINT) throughout all stories. Service layer maintained proper integration contracts without fake implementations.
+> **Worker dispatch is synchronous — never background it**
+> Run the `opencode run` command with a terminal timeout of at least 1800 seconds and WAIT for it to exit.
+> **ADD:** On ANY non-zero worker return code, immediately run `git status --porcelain` and `.hermes/skills/migration-harness/sensors.sh task` BEFORE dispatching corrections. Failed sessions with rc=124, rc=137 left unclear state requiring supervisor intervention. Log tree state explicitly to prevent orphan confusion.
 
-(4) **harness waste:**
+### 4. Artifact review — harvest fidelity and story scope
 
-**Session overhead:** 46 total sessions for 5 stories = 9.2 sessions per story (high). Long correction sessions (T-002-a1p0: 1654s, T-002-sfix: 903s) indicate packet sizing issues.
+**Evidence:** From run-log.md, all 6 findings successfully resolved with 100% resolution rate. Review of commit patterns shows proper story ordering and dependency compliance.
 
-**Deploy correction waste:** 3 rounds of factory failures requiring dedicated fix sessions (769s + 1145s = 1914s) suggest preflight sensors don't mirror factory build conditions.
+**Assessment:** 
+- **Harvest fidelity:** HIGH — All domain models (Product, ShoppingCart, ShoppingCartItem, Promotion) preserved with exact field structures and constructors
+- **Story-scope discipline:** HIGH — Clean story boundaries (S01→S02→S03→S04→S05), no scope violations detected
+- **Test coverage:** HIGH — Characterizations tests for business rules (25% discount on item 329299, free shipping ≥$75) properly pinned TARGET behavior
+- **No fabrication detected:** All migrated classes trace back to legacy sources, no invented stubs
 
-**Sensor-fix inefficiency:** 3 failed sensor-fix attempts (T-008-sfix: 484s, T-002-sfix: 903s, T-003-sfix: 511s) totaling 1898s of wasted correction time, indicating sensor-fix packets lack sufficient diagnostic context.
+### 5. Harness waste identification
+
+**Evidence:** 47 model sessions for a 5-story migration indicates high overhead:
+- 11 retro sessions (unnecessary post-story overhead)
+- Multiple re-dispatch patterns (T-005 appeared 4+ times)
+- Long worker sessions (1654s, 902s) suggesting inefficient packet sizing
+- 10 sensor correction cycles creating redundant verification
+
+**Waste factors:**
+- Excessive retro sessions between story gates
+- Oversized worker packets causing timeouts
+- Post-commit sensor pattern creating correction loops
+- No early tree-state validation on failures
+
+**Impact:** The run succeeded but at 9+ sessions per story vs. optimal 3-4, suggesting systematic efficiency improvements needed in packet sizing and sensor orchestration.
+
+---
+
+**Total sessions:** 47 | **Success rate:** 60% (28 success) | **Completion:** 100% findings resolved | **Deploy:** success: shipped, route 200, 4 products
