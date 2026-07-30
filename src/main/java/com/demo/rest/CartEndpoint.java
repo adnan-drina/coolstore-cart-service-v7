@@ -19,6 +19,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import com.demo.model.Product;
 import com.demo.model.ShoppingCart;
 import com.demo.service.CatalogService;
+import com.demo.service.CatalogUnavailableException;
 import com.demo.service.ShoppingCartService;
 
 @Path("/cart")
@@ -93,8 +94,27 @@ public class CartEndpoint {
     @GET
     @Path("/acceptance-check")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Product> acceptanceCheck() {
-        return catalogService.products();
+    public Response acceptanceCheck() {
+        List<Product> products = catalogService.products();
+        if (products.isEmpty()) {
+            throw new CatalogUnavailableException("Catalog returned no products");
+        }
+        return Response.ok(products).build();
+    }
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response index() {
+        return Response.ok(Map.of(
+            "service", "coolstore-cart",
+            "version", "1.0.0",
+            "endpoints", List.of(
+                "/api/cart/{cartId}",
+                "/api/cart/acceptance-check",
+                "/q/health"
+            )
+        )).build();
     }
 
     private void requireCartId(String cartId) {
