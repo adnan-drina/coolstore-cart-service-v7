@@ -48,28 +48,25 @@
 **Goal**: Update test dependencies from Spring Boot Test to Quarkus JUnit 5 and test framework  
 **Acceptance**: `/projects/modernized/pom.xml` with Quarkus test dependencies; spring-boot-starter-test removed
 
-#### T-009: Create application.properties and acceptance endpoint structure
+#### T-009: Create application.properties with CATALOG_ENDPOINT
 **Class**: rewrite  
 **Findings**: demo-env-integration-00001 (1)  
-**Goal**: Create Quarkus application.properties with CATALOG_ENDPOINT configuration and basic acceptance endpoint structure  
-**Acceptance**: `/projects/modernized/src/main/resources/application.properties` with CATALOG_ENDPOINT property; Feign dependency removed; acceptance endpoint placeholder prepared
-
-#### T-010: Create acceptance endpoint placeholder
-**Class**: rewrite  
-**Findings**: (acceptance path requirement)  
-**Goal**: Create minimal acceptance endpoint structure for `/api/cart/acceptance-check`  
-**Acceptance**: `/projects/modernized/src/main/java/com/demo/AcceptanceEndpoint.java` with `@Path("/cart/acceptance-check")` JAX-RS structure; endpoint returns simple status response for web surface validation
+**Goal**: Create Quarkus application.properties with CATALOG_ENDPOINT (preserve)  
+**Acceptance**: `/projects/modernized/src/main/resources/application.properties` with CATALOG_ENDPOINT property; Feign dependency removed  
+**UI surface: waived** (API conversion owned by deploying story)  
+**Acceptance Path Waiver**: `/api/cart/acceptance-check` deferred to deploying story — that story adds a real `@Path` / Endpoint resource returning catalog `products[]` (not a status-map); S01 must not create AcceptanceEndpoint  
+**Out of scope**: AcceptanceEndpoint Java class in S01 (S-AC1)
 
 #### T-011: Resolve Spring Boot version incompatibility with Jakarta EE 9+
 **Class**: infer  
 **Findings**: spring-components-00001 (1)  
-**Goal**: Address Spring Boot version compatibility issues with Jakarta EE 9+ namespace migration  
-**Acceptance**: POM dependencies updated to eliminate Jakarta EE 9+ incompatibility; Spring Boot artifacts properly replaced or upgraded  
-**Design**: `src/main/resources/application.properties` → Quarkus application.properties with `quarkus.rest-client."catalog-service.url=${CATALOG_ENDPOINT:http://localhost:8081}"` configuration; Spring Boot parent → Quarkus BOM parent with `@QuarkusMain` bootstrap; **Target**: Complete Spring Boot elimination, Quarkus 3.27.3.SP1 BOM with platform dependency management, Jakarta EE 9+ compatibility through unified coordinates
+**Goal**: Ensure POM has no Spring Boot artifacts left that conflict with Jakarta EE 9+ / Quarkus BOM  
+**Acceptance**: `pom.xml` has Quarkus BOM parent/platform deps; no `spring-boot-starter-*` remaining  
+**Design**: Target file `pom.xml` — Quarkus BOM parent + platform BOM import; remove any remaining `spring-boot-starter-*` / Spring Boot plugin coordinates; do not add `src/main/java` classes in S01
 
 #### T-012: Resolve Spring framework version incompatibility with Jakarta EE 9+
 **Class**: infer  
 **Findings**: spring-components-00002 (1)  
-**Goal**: Address Spring framework version compatibility issues with Jakarta EE 9+ namespace migration  
-**Acceptance**: Spring dependencies updated to eliminate Jakarta EE 9+ incompatibility; javax.* → jakarta.* namespace migration complete  
-**Design**: `migration/staging/src/main/java/com/redhat/coolstore/rest/CartEndpoint.java` → `src/main/java/com/demo/rest/CartEndpoint.java` with `@Path("/cart")`, `ConcurrentHashMap<String, ShoppingCart>` for thread-safe storage, and `@ApplicationScoped` CDI; `migration/staging/src/main/java/com/redhat/coolstore/service/ShoppingCartServiceImpl.java` → `src/main/java/com/demo/service/ShoppingCartServiceImpl.java` with constructor injection and `compute()` operations; **Target**: Complete dependency modernization with quarkus-rest-jackson, quarkus-smallrye-health, quarkus-smallrye-metrics replacing all Spring artifacts; javax.* → jakarta.* namespace transformation complete via OpenRewrite recipes
+**Goal**: Ensure POM has no Spring Framework artifacts left that conflict with Jakarta EE 9+  
+**Acceptance**: `pom.xml` free of Spring Framework deps (`spring-context`, `spring-web`, etc.)  
+**Design**: Target file `pom.xml` — delete Spring Framework dependencies; rely on Quarkus BOM for Jakarta EE 9+; do **not** harvest `CartEndpoint` / `ShoppingCartServiceImpl` in S01 (later stories)
