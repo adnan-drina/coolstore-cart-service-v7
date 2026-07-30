@@ -9,7 +9,8 @@ Appended by the Hermes orchestrator after every task (see
 | T-005 | rewrite | 1 | COMPLETED - Already satisfied (SmallRye Health dependency present, no Spring Boot Actuator) | pom.xml verified correct |
 | T-007 | rewrite | 1 | ALREADY COMPLETE (quarkus-rest-jackson present, no Jersey dependencies) | pom.xml verified correct |
 | T-008 | rewrite | 1 | ALREADY COMPLETE (Quarkus test dependencies present, no Spring Boot test dependencies) | pom.xml verified correct |
-| T-011 | infer | 1 | COMPLETED (already satisfied) | pom.xml: verified clean of Spring Boot artifacts; Quarkus BOM in place |
+|| T-001 | rewrite | 1 | COMPLETED - Package structure already exists | src/main/java/com/demo/service/ directory verified |
+|| T-011 | infer | 1 | COMPLETED (already satisfied) | pom.xml: verified clean of Spring Boot artifacts; Quarkus BOM in place |
 
 ## M5 EVALUATE — Findings Delta Analysis
 
