@@ -32,22 +32,43 @@ fi
 ORCH_PROVIDER="${ORCH_PROVIDER:-custom:maas-m2}"
 ORCH_MODEL="${ORCH_MODEL:-minimax-m2}"
 WORKER_MODEL="${WORKER_MODEL:-qwen27b/qwen3-6-27b}"
+# V7: MiniMax is rate-limited; Qwen has unlimited tokens. Mechanical M4
+# coding (rewrite + infer) goes to OpenCode/Qwen first. MiniMax/Hermes is
+# for orchestration + escalation only (M1–M3, sensor-fix, M5 evaluate).
+WORKER_FIRST="${WORKER_FIRST:-true}"
 SESSION_TIMEOUT="${SESSION_TIMEOUT:-2700}"
 MAX_ATTEMPTS=2            # judgment attempts per stage (platform faults excluded)
 MAX_PLATFORM_RETRIES=4    # consecutive platform-fault retries per stage
+
+orch_label() {
+  case "${ORCH_MODEL}" in
+    *minimax*) echo "orchestrator MiniMax M2 (Hermes)" ;;
+    *) echo "orchestrator ${ORCH_MODEL} (Hermes)" ;;
+  esac
+}
+worker_label() {
+  case "${WORKER_MODEL}" in
+    *qwen*) echo "coding worker Qwen3.6 27B (OpenCode)" ;;
+    *) echo "coding worker ${WORKER_MODEL} (OpenCode)" ;;
+  esac
+}
 
 RUN_BASE="${RUN_BASE:-$(git rev-parse HEAD)}"   # commits after this belong to THIS run (env-overridable for resume)
 TASKS_SINCE_MILESTONE=0   # supervisor-enforced in-loop sonar cadence
 SUPERVISOR_VERSION=$(md5sum "$0" 2>/dev/null | cut -c1-8)
 LOG=/tmp/supervisor.log
+OUTER_LOG="${OUTER_LOG:-/tmp/outer-loop.log}"
 EVENTS=/tmp/supervisor-events.csv
 METRICS=/tmp/supervisor-metrics.csv
 [ -f "$EVENTS" ]  || echo "epoch,stage,attempt,class,action" > "$EVENTS"
 [ -f "$METRICS" ] || echo "session,start,end,seconds,rc" > "$METRICS"
 
 log()   { echo "[$(date -u +%F' '%T)] $*" >> "$LOG"; }
+# Mirror demo-facing lines into the outer-loop narrative (tail -f /tmp/outer-loop.log).
+outer_log() { echo "[$(date -u +%F' '%T)] $*" >> "$OUTER_LOG"; }
 
-log "supervisor start: version=${SUPERVISOR_VERSION} run_base=${RUN_BASE} orch=${ORCH_PROVIDER}/${ORCH_MODEL} worker=${WORKER_MODEL}"
+log "supervisor start: version=${SUPERVISOR_VERSION} run_base=${RUN_BASE} orch=${ORCH_PROVIDER}/${ORCH_MODEL} worker=${WORKER_MODEL} worker_first=${WORKER_FIRST}"
+outer_log "         Models: $(orch_label) · $(worker_label) | M4 coding → worker first (MiniMax escalation only)"
 # C1: per-run isolated Maven repo — factory-parity resolution for every sensor
 .hermes/harness/sensors.sh seed >> "$LOG" 2>&1 || log "WARN: isolated repo seed failed — sensors fall back to red-on-use"
 event() { echo "$(date -u +%s),$1,$2,$3,$4" >> "$EVENTS"; }
@@ -167,10 +188,12 @@ scope_enforce() { # $1=commit-prefix
     if [ -n "$lviol" ]; then
       event "scope" 0 later_story_class "${lviol# }"
       log "scope sensor: reverted src/main class(es) a LATER story owns:${lviol}"
+      # S-LC: demo-visible — later-story fabrication must not hide in supervisor.log only
+      outer_log "         SCOPE REVERT (S-LC): removed later-story class(es) created early:${lviol} — keep them in migration/staging until their story"
       {
         echo "The story-scope sensor reverted src/main class(es) owned by a LATER story:${lviol}"
         echo "These REDESIGN classes are converted in a later story — do NOT create them now."
-        echo "A characterization test needing them uses a Mockito double or a test-local fake in src/test — never the real src/main class."
+        echo "Prefer migration/staging until the owning story; characterization tests use Mockito / test-local fakes — never the real src/main class."
       } > /tmp/scope-violation.txt
       git rm -q $lviol 2>/dev/null
       git add -A && git commit -q -m "${prefix} scope revert: removed later-story class(es) created early (${lviol# })" 2>/dev/null
@@ -366,6 +389,8 @@ run_stage() {
     case "$cls" in
       quota)
         log "$tag: quota throttle — backing off 15m (attempt NOT burned)"
+        # L-R1: surface MiniMax waits in the demo outer-loop narrative
+        outer_log "         … waiting on MiniMax rate limit (900s backoff; attempt NOT burned) — tag=${tag}"
         sleep 900; pf=$((pf+1));;
       stream_stall|ctx_overflow)
         log "$tag: $cls — platform fault, retrying in 2m (attempt NOT burned)"
@@ -561,6 +586,47 @@ PYEOF
 )
 task_class() { echo "$TASK_CLASSES" | grep -m1 "^$1:" | cut -d: -f2; }
 
+# Task title from tasks.md heading (demo log: T-001 + human description).
+task_title() { # $1=task-id
+  local tid="$1"
+  [ -f "${TASKS_FILE:-}" ] || { echo "$tid"; return; }
+  python3 -c "
+import re, sys
+tid, path = sys.argv[1], sys.argv[2]
+text = open(path, encoding='utf-8', errors='replace').read()
+m = re.search(r'^#{2,6}\s+' + re.escape(tid) + r'\s*:\s*(.+)$', text, re.M)
+print(m.group(1).strip() if m else tid)
+" "$tid" "$TASKS_FILE" 2>/dev/null || echo "$tid"
+}
+
+# Demo + supervisor: task progress with code AND description.
+log_task() { # $1=START|END|SKIP|BATCH  $2=tid-or-ids  [$3=detail]
+  local kind="$1" tid="$2" detail="${3:-}" title cls line
+  case "$kind" in
+    BATCH)
+      line="▶ TASKS  batch rewrite — ${tid}${detail:+ — $detail}"
+      ;;
+    START)
+      title=$(task_title "$tid"); cls=$(task_class "$tid")
+      [ -n "$cls" ] || cls="?"
+      line="▶ TASK   ${tid} — ${title} [class=${cls}]${detail:+ — ${detail}}"
+      ;;
+    END)
+      title=$(task_title "$tid")
+      line="✓ TASK   ${tid} — ${title}${detail:+ — ${detail}}"
+      ;;
+    SKIP)
+      title=$(task_title "$tid")
+      line="· TASK   ${tid} — ${title}${detail:+ — ${detail}}"
+      ;;
+    *)
+      line="  TASK   ${tid}${detail:+ — ${detail}}"
+      ;;
+  esac
+  log "$line"
+  outer_log "$line"
+}
+
 # V6 P2.4 — already-complete fast path (strict probe).
 # Probe lives in already-complete.py so instruments can lock the contract.
 # V6 abort evidence: bash grepping the first Capitalized word as a class
@@ -604,56 +670,143 @@ Rules (V6 P2.3):
 1. Inspect git status --porcelain first.
 2. Run .hermes/harness/sensors.sh task once.
 3. Do NOT launch opencode unless the working tree is dirty AND that sensor is RED.
-4. If sensors are GREEN: commit ONE commit whose message STARTS with '${T}:' (allow-empty ALREADY COMPLETE only when the task findings are already satisfied).
+4. If sensors are GREEN: commit ONE commit whose message STARTS with '${T}:' describing the work. Do NOT invent allow-empty 'ALREADY COMPLETE' commits — that path is supervisor-only via already-complete.py (O-AC).
 5. Never background a worker; never use python3 heredocs or python3 -c multi-line scripts — use bundled harness scripts only.
 ${RUN_CONTRACT}
 EOF
 }
 
-run_task() { # $1=task id — the ordinary single-task stage
+# V7 model routing — OpenCode/Qwen does M4 coding; MiniMax not in this path.
+run_worker_task() { # $1=task-id → 0 if committed
+  local T="$1" packet rc
+  committed "$T" && return 0
+  [ -f .hermes/harness/task-packet.py ] || return 1
+  wait_for_worker
+  packet=$(python3 .hermes/harness/task-packet.py "$TASKS_FILE" "$T" "$WORKER_MODEL" 2>/tmp/task-packet.err) || {
+    log "$T: task-packet.py failed — $(head -1 /tmp/task-packet.err 2>/dev/null)"
+    return 1
+  }
+  [ -n "$packet" ] || return 1
+  log_task START "$T" "Actor: $(worker_label) — MiniMax not used for coding"
+  timeout 1800 opencode run "$packet" \
+    -m "$WORKER_MODEL" --auto --format json \
+    -f "$TASKS_FILE" -f AGENTS.md \
+    > "/tmp/oc-${T}.json" 2>"/tmp/oc-${T}.err"
+  rc=$?
+  wait_for_worker
+  log "$T: worker exit rc=${rc} (details /tmp/oc-${T}.err)"
+  if committed "$T"; then
+    return 0
+  fi
+  # Worker often leaves a green dirty tree without the required commit prefix.
+  if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+    if .hermes/harness/sensors.sh task > /tmp/sensor-task.log 2>&1; then
+      # O-T6b: never sweep .hermes/ harness dirt into T-NNN commits
+      git add -A
+      git reset -q -- .hermes 2>/dev/null || true
+      git diff --cached --quiet && return 1
+      git commit -q -m "${T}: $(task_title "$T") (worker $(worker_label))" 2>/dev/null \
+        || git commit -m "${T}: $(task_title "$T") (worker $(worker_label))" >/dev/null 2>&1
+      committed "$T" && return 0
+    fi
+  fi
+  return 1
+}
+
+# O-T6: dirty tree already satisfies the task sensor — commit without a model.
+# O-T6b: stage everything except .hermes/ (harness dirt must not land in T-NNN:).
+try_mechan_commit() { # $1=task-id → 0 if committed
+  local T="$1"
+  committed "$T" && return 0
+  [ -n "$(git status --porcelain 2>/dev/null)" ] || return 1
+  if .hermes/harness/sensors.sh task > /tmp/sensor-task.log 2>&1; then
+    git add -A
+    git reset -q -- .hermes 2>/dev/null || true
+    if git diff --cached --quiet; then
+      log "$T: O-T6b skip mechan-commit — only .hermes/ dirt (or empty stage)"
+      return 1
+    fi
+    git commit -q -m "${T}: $(task_title "$T") (mechanical verify-and-commit; O-T6)" 2>/dev/null \
+      || git commit -m "${T}: $(task_title "$T") (mechanical verify-and-commit; O-T6)" >/dev/null 2>&1
+    committed "$T" && { log "$T: mechanical verify-and-commit (dirty+GREEN; O-T6)"; return 0; }
+  fi
+  return 1
+}
+
+run_task() { # $1=task id — worker-first, MiniMax escalation only if needed
   local T="$1"
   if try_already_complete "$T"; then
+    log_task SKIP "$T" "already complete (fast path); skipped worker"
     scope_enforce "$T"
     post_commit_verify "$T" "$T"
     return 0
   fi
-  run_stage "$T" "$T" \
+  # O-T6: untracked/dirty target tree already green — don't burn a model seat
+  if try_mechan_commit "$T"; then
+    log_task END "$T" "mechanical commit (O-T6) — $(git log --oneline -1 | cut -c1-80)"
+    scope_enforce "$T"
+    post_commit_verify "$T" "$T"
+    return 0
+  fi
+  if [ "${WORKER_FIRST}" = "true" ] && run_worker_task "$T"; then
+    scope_enforce "$T"
+    post_commit_verify "$T" "$T"
+    log_task END "$T" "committed via $(worker_label) — $(git log --oneline -1 | cut -c1-80)"
+    return 0
+  fi
+  log_task START "$T" "Actor: $(orch_label) escalation — worker incomplete/failed"
+  if run_stage "$T" "$T" \
 "Use the migration-harness skill and read EXECUTION.md in its directory. Execute M4 for task ${T} from ${TASKS_FILE} ONLY.
+MODEL ROUTING (V7): You are MiniMax orchestrator on ESCALATION. Prefer dispatching opencode (-m ${WORKER_MODEL}) for all file-changing work. Do NOT apply mechanical rewrite/harvest edits with your own tools unless the worker already failed — Qwen has unlimited tokens; MiniMax is rate-limited.
 Worker discipline (V6 P2.1/P2.2): run opencode in the FOREGROUND with a terminal timeout ≥1800s; WAIT for exit; NEVER background it; NEVER use python3 <<heredoc, python3 -c multi-line, or scratch OpenRewrite — bundled scripts only.
 ${RUN_CONTRACT}
 Finish with ONE commit whose message STARTS with '${T}:'. Stop after ${T}." \
 "Use the migration-harness skill and read EXECUTION.md in its directory. Continue M4 for task ${T} from ${TASKS_FILE} ONLY. Inspect git status first. If a previous worker left complete work and sensors are GREEN, commit ONE commit starting '${T}:' WITHOUT launching opencode. Launch opencode only when the tree is incomplete or sensors are RED. Foreground worker only; bundled scripts only — no heredocs / python3 -c.
-${RUN_CONTRACT}" \
-    || log "$T: exhausted — recorded, moving on"
+${RUN_CONTRACT}"; then
+    log_task END "$T" "committed via MiniMax escalation — $(git log --oneline -1 | cut -c1-80)"
+  else
+    log_task SKIP "$T" "exhausted — recorded in debt; moving on"
+    log "$T: exhausted — recorded, moving on"
+  fi
 }
 
 BATCH_MAX="${BATCH_MAX:-3}"
 flush_batch() { # $1=space-separated rewrite task ids
+  # V7: do NOT send rewrite batches to MiniMax "apply directly" — that burned
+  # the rate-limited orchestrator on mechanical harvest/POM work. Each rewrite
+  # goes worker-first (OpenCode/Qwen), same as infer.
   local ids="${1# }"; [ -n "$ids" ] || return 0
-  local n; n=$(echo $ids | wc -w | tr -d ' ')
-  if [ "$n" -ge 2 ]; then
-    local list; list=$(echo $ids | tr ' ' ',')
-    log "batch: dispatching $n rewrite tasks in one session: $ids"
-    orch "batch-$(echo $ids | tr ' ' '-')" \
-"Use the migration-harness skill and read EXECUTION.md in its directory. Execute M4 for tasks ${list} from ${TASKS_FILE}, IN ORDER. These are rewrite-class mechanical tasks — the plan states the exact transformation for each; apply it directly per the EXECUTION.md rewrite discipline. For EACH task finish with ONE commit whose message STARTS with that task's id and a colon (e.g. 'T-004:') BEFORE starting the next task. Stop after the last listed task.
-${RUN_CONTRACT}"
-  fi
-  # Anything the batch session missed falls back to the single-task stage;
-  # ids it committed are picked up by run_stage's entry check.
-  local T
+  local n T desc
+  n=$(echo $ids | wc -w | tr -d ' ')
+  desc=""
   for T in $ids; do
-    committed "$T" && { log "$T: committed (batch session)"; continue; }
+    desc="${desc}${desc:+; }${T}: $(task_title "$T")"
+  done
+  log "batch: worker-first rewrite path ($n tasks, no MiniMax apply-directly): $ids"
+  log_task BATCH "$ids" "Actor: $(worker_label) each — $desc"
+  for T in $ids; do
+    committed "$T" && { log_task SKIP "$T" "already committed"; continue; }
     run_task "$T"
   done
-  # One verification pass covers the batch's commits (same cadence spirit
-  # as the every-3rd-task milestone rule).
   [ "$n" -ge 2 ] && post_commit_verify "$(echo $ids | awk '{print $NF}') batch" "batch-verify"
   return 0
 }
 
+# Publish the full task list into the demo narrative before M4 work.
+{
+  outer_log "         M4 task list ($(echo $TASK_IDS | wc -w | tr -d ' ') tasks) from ${TASKS_FILE}:"
+  for T in $TASK_IDS; do
+    outer_log "         • ${T} — $(task_title "$T") [class=$(task_class "$T")]"
+  done
+} 2>/dev/null || true
+
 BATCH=""
 for T in $TASK_IDS; do
-  committed "$T" && { log "$T: already committed"; continue; }
+  if committed "$T"; then
+    log "$T: already committed"
+    log_task SKIP "$T" "already committed — skipping"
+    continue
+  fi
   if [ "$(task_class "$T")" = "rewrite" ]; then
     BATCH="$BATCH $T"
     [ "$(echo $BATCH | wc -w | tr -d ' ')" -ge "$BATCH_MAX" ] && { flush_batch "$BATCH"; BATCH=""; }
@@ -680,11 +833,20 @@ if ! committed "M5 evaluate"; then
     && log "M5 evaluate: after-analysis complete (script step)" \
     || log "WARN: after-analysis failed — M5 evaluate proceeds without the delta"
   run_stage "M5 evaluate" "m5-evaluate" \
-"Use the migration-harness skill and read SHIPPING.md in its directory. All tasks are executed (see migration/run-log.md and migration/debt.md). Execute M5 evaluate per SHIPPING.md. The harness ALREADY RAN the after-analysis: migration/mta-findings-after.json (use .hermes/skills/migration-harness/scripts/extract_findings.py to summarize it — do NOT run analysis tools yourself). Append the findings delta to the run-log with every remaining finding individually explained (resolved here / owned by a later story / genuine debt), and verify mvn -q clean verify green.
+"Use the migration-harness skill and read SHIPPING.md in its directory. All tasks are executed (see migration/run-log.md and migration/debt.md). Execute M5 evaluate per SHIPPING.md. The harness ALREADY RAN the after-analysis: migration/mta-findings-after.json (use .hermes/skills/migration-harness/scripts/extract_findings.py to summarize it — do NOT run analysis tools yourself). Append the findings delta to the run-log with every remaining finding individually explained (resolved here / owned by a later story / genuine debt). Run .hermes/harness/sensors.sh preflight and record the result honestly — do NOT claim factory/preflight green unless that command exits 0 (L-M5e; mvn verify alone is not enough).
 ${RUN_CONTRACT}
 Commit prefix: 'M5 evaluate:'. DO NOT PUSH." \
-"Use the migration-harness skill and read SHIPPING.md in its directory. Execute M5 evaluate per the skill; a previous attempt did not commit. Verify migration/mta-findings-after.json and the delta section exist, mvn -q clean verify passes, then commit with message starting 'M5 evaluate:'. ${RUN_CONTRACT}" \
+"Use the migration-harness skill and read SHIPPING.md in its directory. Continue M5 evaluate; verify migration/mta-findings-after.json and the delta section exist, run .hermes/harness/sensors.sh preflight, state GREEN or RED honestly in the commit message (L-M5e), then commit starting 'M5 evaluate:'. ${RUN_CONTRACT}" \
     || log "M5 evaluate: exhausted — shipping without final re-analysis commit"
+  # L-M5e: mechanical honesty check — evaluate commit must not be treated as
+  # ship-ready when preflight is RED (V8 S02 overstated evaluate).
+  if committed "M5 evaluate"; then
+    if .hermes/harness/sensors.sh preflight > /tmp/m5-evaluate-preflight.txt 2>&1; then
+      log "M5 evaluate: preflight GREEN (L-M5e bar)"
+    else
+      log "M5 evaluate: preflight RED after evaluate commit (L-M5e) — not ship-ready; ship loop will correct — $(grep -E 'SENSOR RED|COVERAGE' /tmp/m5-evaluate-preflight.txt | head -3 | tr '\n' ' ')"
+    fi
+  fi
 fi
 
 # ---------------------------------------------------------------- M5 ship

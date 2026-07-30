@@ -131,6 +131,7 @@ run_case() {
 **Class**: infer
 **Source**: migration/staging/src/main/java/com/redhat/coolstore/model/Cart.java
 **Target**: src/main/java/com/demo/model/Cart.java
+**Test**: src/test/java/com/demo/model/CartTest.java
 Package transform com.redhat.coolstore.model to com.demo.model.
 EOF
   } > tasks.md
@@ -1027,6 +1028,158 @@ run_case() {
   SENSOR_ROOT="$FIX" bash "$SENSORS" static
 }
 check "static sensors reject ceremonial status-map acceptance (V6 abort)" 1 "acceptance"
+
+# 84-86. V7 model routing — mechanical M4 via OpenCode/Qwen, not MiniMax
+TP_PY="$HARNESS_DIR/task-packet.py"
+run_case() {
+  mkfix
+  cat > tasks.md <<'EOF'
+# Tasks
+#### T-010: Harvest PromoService from staging
+**Class**: rewrite
+**Goal**: Copy transformed PromoService into target package
+**Findings**: spring-javaformat
+**Acceptance**: src/main/java/com/demo/service/PromoService.java exists; mvn -q test
+**Target design**: harvest migration/staging/.../PromoService.java → src/main/java/com/demo/service/
+EOF
+  python3 "$TP_PY" tasks.md T-010 qwen27b/qwen3-6-27b
+}
+check "task-packet.py builds rewrite packet for OpenCode worker (V7)" 0 "Class: rewrite"
+
+run_case() {
+  mkfix
+  cat > tasks.md <<'EOF'
+# Tasks
+#### T-011: Convert CartService to CDI
+**Class**: infer
+**Goal**: CDI constructor injection for CartService
+**Findings**: spring-di
+**Acceptance**: CartService uses @Inject; tests pass
+EOF
+  out=$(python3 "$TP_PY" tasks.md T-011 qwen27b/qwen3-6-27b)
+  echo "$out" | grep -q 'Class: infer' && echo "$out" | grep -q 'qwen27b/qwen3-6-27b' && echo packet-ok
+}
+check "task-packet.py builds infer packet naming worker model (V7)" 0 "packet-ok"
+
+run_case() {
+  grep -q 'WORKER_FIRST' "$HARNESS_DIR/supervisor.sh" \
+    && grep -q 'run_worker_task' "$HARNESS_DIR/supervisor.sh" \
+    && ! grep -qE 'apply it directly per the EXECUTION' "$HARNESS_DIR/supervisor.sh" \
+    && echo routing-ok
+}
+check "supervisor worker-first; no MiniMax apply-directly rewrite batch (V7)" 0 "routing-ok"
+
+# 87-91. V8 polish bank (G-OK, G-FAKE, S-FND, S-SOFT, L-H1)
+run_case() {
+  sensor_fixture
+  mkdir -p src/main/java/com/demo/rest
+  printf 'package com.demo.rest;\nimport jakarta.ws.rs.GET;\nimport jakarta.ws.rs.Path;\n@Path("/api/cart/acceptance-check")\npublic class AcceptanceEndpoint {\n  @GET\n  public String check() { return "OK"; }\n}\n' \
+    > src/main/java/com/demo/rest/AcceptanceEndpoint.java
+  SENSOR_ROOT="$FIX" bash "$SENSORS" static
+}
+check "static sensors reject ceremonial String/OK acceptance (G-OK)" 1 "acceptance"
+
+run_case() {
+  out=$(printf '%s\n' '[{"name":"Car"},{"name":"Bike"}]' | python3 "$HARNESS_DIR/acceptance-products.py")
+  echo "count=$out"
+}
+check "acceptance-products rejects products without id/itemId (G-FAKE)" 0 "count=0"
+
+run_case() {
+  mkfix
+  mkdir -p briefs
+  # Minimal briefs with a legacy code fence so LINT:briefs doesn't dominate
+  for s in S01-platform S02-rest; do
+    cat > "briefs/${s}.md" <<'BEOF'
+# brief
+## In scope
+```java
+public void realMethod() { }
+```
+BEOF
+  done
+  cat > roadmap.md <<'EOF'
+# Modernization roadmap
+## S01: Platform
+- scope: pom.xml
+- findings:
+- depends: -
+- deploy: false
+- done: build passes
+- rationale: foundation
+## S02: REST
+- scope: src/main/java/com/demo/rest/CartEndpoint.java
+- findings: jakarta-jaxrs-to-quarkus-00010
+- depends: S01
+- deploy: true
+- done: API live
+- rationale: surface
+EOF
+  printf '# inv\n- rewrite: 1 — jakarta-jaxrs-to-quarkus-00010\n' > inv.md
+  python3 "$HARNESS_DIR/roadmap-lint.py" roadmap.md inv.md
+}
+check "roadmap-lint rejects empty findings field (S-FND)" 1 "findings field is empty"
+
+run_case() {
+  mkfix
+  cat > tasks.md <<'EOF'
+# Tasks
+#### T-001: Prepare for quality gate
+**Class**: rewrite
+- Prepare for the sonar gate; touch pom.xml if needed.
+EOF
+  printf 'legacyPackage: com.redhat.coolstore\ntargetPackage: com.demo\n' > migration.yaml
+  python3 "$LINT" tasks.md
+}
+check "plan-lint rejects soft prepare-for tasks (S-SOFT)" 1 "S-SOFT"
+
+run_case() {
+  grep -q 'outer-loop-heartbeat' "$HARNESS_DIR/outer-loop.sh" \
+    && grep -q 'OUTER_LOOP_PLAIN' "$HARNESS_DIR/outer-loop.sh" \
+    && grep -q 'waiting on MiniMax rate limit' "$HARNESS_DIR/supervisor.sh" \
+    && grep -q 'try_mechan_commit' "$HARNESS_DIR/supervisor.sh" \
+    && grep -q 'O-T6b' "$HARNESS_DIR/supervisor.sh" \
+    && grep -q 'git reset -q -- .hermes' "$HARNESS_DIR/supervisor.sh" \
+    && echo polish-ok
+}
+check "outer-loop/supervisor carry V8 polish hooks (L-H1/L-P1/L-R1/O-T6/O-T6b)" 0 "polish-ok"
+
+# G-PLACE: placeholder/ceremonial unit tests must RED (V8 S02 T-005 abort)
+run_case() {
+  sensor_fixture
+  mkdir -p src/test/java/com/demo
+  cat > src/test/java/com/demo/PlaceholderTest.java <<'EOF'
+package com.demo;
+import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+class PlaceholderTest {
+  @Test void ceremonial() { assertThat(true).isTrue(); }
+}
+EOF
+  SENSOR_ROOT="$FIX" bash "$SENSORS" static
+}
+check "static sensors reject assertThat(true) placeholder tests (G-PLACE)" 1 "G-PLACE"
+
+# S-CHAR: model harvest plan without src/test paths
+run_case() {
+  mkfix
+  cat > tasks.md <<'EOF'
+# Tasks
+#### T-001: Product Model Harvest
+**Class**: rewrite
+- Destination: `src/main/java/com/demo/model/Product.java`
+EOF
+  printf 'legacyPackage: com.redhat.coolstore\ntargetPackage: com.demo\n' > migration.yaml
+  python3 "$LINT" tasks.md
+}
+check "plan-lint rejects model harvest with no src/test tasks (S-CHAR)" 1 "S-CHAR"
+
+run_case() {
+  grep -q 'L-M5e' "$HARNESS_DIR/supervisor.sh" \
+    && grep -q 'm5-evaluate-preflight' "$HARNESS_DIR/supervisor.sh" \
+    && echo m5e-ok
+}
+check "supervisor carries L-M5e evaluate preflight honesty check" 0 "m5e-ok"
 
 echo "----"
 echo "$PASS/$N passed"

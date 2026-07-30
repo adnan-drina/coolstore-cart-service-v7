@@ -94,8 +94,10 @@ EOF
     task|milestone)
       cat <<'EOF'
 FIX: Read the sensor log cited above. Prefer root-cause (missing harvest
-dependency, wrong package, broken test) over silencing assertions. Re-run
-.hermes/harness/sensors.sh task until GREEN, then commit. See EXECUTION.md.
+dependency, wrong package, broken test) over silencing assertions. G-PLACE:
+never "fix" with assertThat(true)/assertTrue(true) or Placeholder stubs —
+restore real behavior assertions or defer the test task to the owning story.
+Re-run .hermes/harness/sensors.sh task until GREEN, then commit. See EXECUTION.md.
 EOF
       ;;
     sonar)
@@ -231,11 +233,25 @@ package_scope() {
   fi
 }
 
+# G-PLACE: ceremonial / placeholder tests that compile+pass without asserting
+# product behavior (V8 S02 T-005: assertThat(true).isTrue() shipped as
+# "verified working"). Cheap static scan — no Maven.
+placeholder_tests() {
+  [ -d src/test/java ] || return 0
+  local hits
+  hits=$(grep -RInE \
+    --include='*.java' \
+    'assertThat[[:space:]]*\([[:space:]]*true[[:space:]]*\)[[:space:]]*\.isTrue[[:space:]]*\(|assertThat[[:space:]]*\([[:space:]]*false[[:space:]]*\)[[:space:]]*\.isFalse[[:space:]]*\(|assertTrue[[:space:]]*\([[:space:]]*true[[:space:]]*\)|assertFalse[[:space:]]*\([[:space:]]*false[[:space:]]*\)|Placeholder until (service|implementation)|//[[:space:]]*Placeholder' \
+    src/test/java 2>/dev/null | head -8 || true)
+  [ -z "$hits" ] || fail task "placeholder/ceremonial test assertions (G-PLACE) — replace with real behavior checks or defer the task; hits: $(echo "$hits" | tr '\n' ' ')"
+}
+
 task_sensor() {
   tree_hygiene
   package_scope
   wiring_invariants
   forbidden_patterns
+  placeholder_tests
   $MVN clean test > /tmp/sensor-task.log 2>&1 \
     || fail task "$(grep -E 'ERROR|FAIL' /tmp/sensor-task.log | head -5)"
   echo "task sensor GREEN (clean test, isolated repo)"
@@ -300,6 +316,7 @@ milestone_sensor() { # $1 = inloop|full (default inloop)
   # CANNOT set the supervisor subprocess's env, so it cannot self-waive.
   # (The old /tmp/fidelity-off file bridge was removed: a session touched
   # it to escape a real fidelity RED — V5 T-004 fabricated-CatalogService.)
+  placeholder_tests
   package_scope
   if [ "${FIDELITY_CHECK:-on}" = "off" ]; then
     echo "fidelity check WAIVED (operator override)"
@@ -310,6 +327,18 @@ milestone_sensor() { # $1 = inloop|full (default inloop)
   $MVN clean verify > /tmp/sensor-milestone.log 2>&1 \
     || fail milestone "$(grep -E 'ERROR|FAIL' /tmp/sensor-milestone.log | head -5)"
   sonar_check "${1:-inloop}"
+  # G-FID: fidelity GREEN ≠ scope clean — summarize later-story classes already in src/main
+  if [ -n "${LATER_CLASSES:-}" ]; then
+    local drift="" c
+    for c in ${LATER_CLASSES}; do
+      find src/main/java -type f -name "${c}.java" 2>/dev/null | grep -q . && drift="${drift} ${c}"
+    done
+    if [ -n "$drift" ]; then
+      echo "WARN scope-drift (G-FID): later-story class(es) present under src/main while fidelity GREEN:${drift}"
+      echo "WARN scope-drift (G-FID): later-story class(es) present under src/main while fidelity GREEN:${drift}" \
+        >> /tmp/outer-loop.log 2>/dev/null || true
+    fi
+  fi
   echo "milestone sensor GREEN (clean verify + sonar[${1:-inloop}], isolated repo)"
 }
 
@@ -448,6 +477,28 @@ acceptance_ship_contract() {
       fail acceptance "ceremonial status-map acceptance in $f (V6) — must return catalog products[] / live fetch, not a status Map"
     fi
   done < <(find src/main/java -type f -name '*.java' -print0 2>/dev/null)
+  # G-OK (V7/V8): plain String / "OK" TEXT acceptance is not catalog proof.
+  # Non-deploy stories otherwise story-gate-pass with return "OK".
+  while IFS= read -r -d '' f; do
+    grep -qE 'acceptanceCheck|acceptance-check|/acceptance' "$f" 2>/dev/null || continue
+    if grep -qE 'return[[:space:]]+"OK"|return[[:space:]]+"ok"|public[[:space:]]+String[[:space:]]+[a-zA-Z0-9_]*\(' "$f" 2>/dev/null; then
+      # Allow String only if the file also fetches a catalog / products list.
+      if ! grep -qE 'products\(|CatalogService|CATALOG_ENDPOINT|List<.*Product' "$f" 2>/dev/null; then
+        fail acceptance "ceremonial String/OK acceptance in $f (G-OK) — must return catalog products[] / live fetch, not TEXT \"OK\""
+      fi
+    fi
+  done < <(find src/main/java -type f -name '*.java' -print0 2>/dev/null)
+  # G-FAKE: MockCatalogService (or hardcoded List.of Product pairs) in src/main
+  # is not a live catalog — ship must use @RestClient CatalogService.
+  if find src/main/java -type f -name 'MockCatalogService.java' 2>/dev/null | grep -q .; then
+    fail acceptance "MockCatalogService in src/main (G-FAKE) — use @RegisterRestClient CatalogService + CATALOG_ENDPOINT"
+  fi
+  while IFS= read -r -d '' f; do
+    grep -qE 'acceptanceCheck|acceptance-check|/acceptance' "$f" 2>/dev/null || continue
+    if grep -qE 'List\.of\s*\(\s*new[[:space:]]+Product|getMockProducts' "$f" 2>/dev/null; then
+      fail acceptance "hardcoded mock products in acceptance surface $f (G-FAKE) — fetch live catalog"
+    fi
+  done < <(find src/main/java -type f -name '*.java' -print0 2>/dev/null)
 }
 
 # V6 R7 / P0c — before deploy, the stamped acceptance.path must have a Java
@@ -520,7 +571,7 @@ case "${1:-}" in
   preflight) preflight;;
   # static: every check that needs no Maven/JVM — used by the X1
   # instrument test suite (tests/instruments.bats) against fixture trees.
-  static)    tree_hygiene; package_scope; forbidden_patterns; wiring_invariants; preserved_integrations; acceptance_ship_contract; acceptance_path_handler; echo "STATIC CHECKS GREEN";;
+  static)    tree_hygiene; package_scope; forbidden_patterns; placeholder_tests; wiring_invariants; preserved_integrations; acceptance_ship_contract; acceptance_path_handler; echo "STATIC CHECKS GREEN";;
   package)   package_scope; echo "PACKAGE SCOPE GREEN";;
   *) echo "usage: sensors.sh seed|task|milestone|sonar|fidelity|preflight|package|static"; exit 2;;
 esac

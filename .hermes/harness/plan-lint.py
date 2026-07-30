@@ -169,9 +169,21 @@ def main():
     # 'coverage' tasks with no code path): every task body must name a
     # concrete artifact it changes.
     substance = re.compile(r"src/(?:main|test)/|pom\.xml|k8s/|application\.properties|migration\.yaml|migration/staging/")
-    for _, tid, _ in heads:
-        if not substance.search(bodies.get(tid, "")):
+    soft = re.compile(
+        r"\b(prepare for|preparation for|verification[- ]only|verify only|final commit|"
+        r"run validation|validate (?:the )?gate|note for later|remember (?:the )?path)\b",
+        re.I,
+    )
+    for _, tid, title in heads:
+        body = bodies.get(tid, "")
+        if not substance.search(body):
             lint("substance", f"{tid}: task body names no code/config path it changes — ceremonial task (waivers belong in spec prose, not tasks)")
+        # S-SOFT: soft prepare / verification-only tasks even when they cite a path
+        if soft.search(title) or soft.search(body.split("\n", 3)[0] if body else ""):
+            lint(
+                "substance",
+                f"{tid}: soft prepare/verification-only task (S-SOFT) — fold into a concrete file-changing task",
+            )
 
     # N2: every preserve: item in migration.yaml must appear in the plan
     try:
@@ -321,6 +333,18 @@ def main():
             if want and not (want & {s.lower() for s in TARGET.findall(body)}):
                 lint("target-trace", f"REDESIGN class {cls}: §7 decides a target shape "
                                      f"({', '.join(sorted(want))}) that no task cites")
+
+    # S-CHAR (V8 S02 HOLD): harvesting model classes without any src/test
+    # task drops characterization / coverage — deferring *service* tests is
+    # fine; emptying test obligations is not.
+    if re.search(r"src/main/java/\S*/model/\S+\.java", text) and not re.search(
+        r"src/test/", text
+    ):
+        lint(
+            "S-CHAR",
+            "plan targets src/main/.../model/*.java but names no src/test/ path — "
+            "add model-level characterization tests (deferring service tests ≠ empty tests; V8 S02)",
+        )
 
     print("\n".join(problems) if problems else
           f"PLAN OK: {len(heads)} tasks, classes {dict((c, list(classes.values()).count(c)) for c in set(classes.values()))}")
