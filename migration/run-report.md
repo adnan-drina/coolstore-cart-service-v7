@@ -5,10 +5,10 @@
 Autonomous migration of coolstore-cart-service-v7:
 story gate passed (non-deploy story): pipeline + quality gate green. Findings delta and per-task detail: migration/run-log.md;
 debt: migration/debt.md. Orchestrator custom:maas-m2/minimax-m2,
-worker qwen27b/qwen3-6-27b, 25 model sessions.
+worker qwen27b/qwen3-6-27b, 28 model sessions.
 
 - Outcome: story gate passed (non-deploy story): pipeline + quality gate green
-- Supervisor version: 704c249c; run base: 3729183
+- Supervisor version: 2518fef3; run base: 6857561
 - Orchestrator: custom:maas-m2/minimax-m2; worker: qwen27b/qwen3-6-27b
 
 ## Sessions
@@ -40,20 +40,23 @@ worker qwen27b/qwen3-6-27b, 25 model sessions.
 | T-008-a1p0 | 69 | rc=0 |
 | T-011-a1p0 | 95 | rc=0 |
 | m5-evaluate-a1p0 | 65 | rc=0 |
+| retro | 60 | rc=0 |
+| T-005-sfix | 902 | rc=124 |
+| m5-evaluate-a1p0 | 61 | rc=0 |
 
 - Escalations (KPI, from supervisor events): 0 (untested: 0)
 
 ## Classified events
 
 ```
-     16 success
-      4 story_gate_pass
-      4 pipeline_succeeded
+     17 success
+      5 story_gate_pass
+      5 pipeline_succeeded
+      3 style_autofix
+      3 sensor_red_post_commit
       3 no_commit
-      2 style_autofix
-      2 sensor_red_post_commit
       2 quota
+      2 already_complete
       1 preflight_red
       1 orphan_worker
-      1 already_complete
 ```
