@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
